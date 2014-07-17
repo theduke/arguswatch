@@ -5,8 +5,33 @@ class PluginImplementationError(Exception):
     pass
 
 
+class ServiceIsDownException(Exception):
+    """
+    Thrown when a plugin check concludes that the service is down.
+    """
+    
+    def __init__(self, info, *args, **kwargs):
+        self.info = info
+        super(ServiceIsDownException, self).__init__(info, *args, **kwargs)
+
+
 class PluginCheckError(Exception):
-    pass
+    """
+    Thrown when a plugin check fails in some EXPECTED way.
+    For example, if a website should be checked, but the checking host
+    does not have an active internet connection.
+
+    If the run_check method throws any other exception apart from 
+    PluginCheckError and ServiceIsDownException, special reporting and error
+    handling will commence.
+
+    So plugins should do their best to handle known errors, and throw
+    this exception with a good explenation.
+    """
+
+    def __init__(self, reason, *args, **kwargs):
+        self.reason = reason
+        super(PluginCheckError, self).__init__(reason, *args, **kwargs)
 
 
 class PluginManager(type):
@@ -32,6 +57,8 @@ class ServicePlugin(metaclass=PluginManager):
     name
     description
     config_class - the Config model for this plugin. Must inherit from arguswatch.models.ServiceConfiguration.
+                   MUST implement get_settings() method, that returns serializable dict with settings needed
+                   for running the check. This will be passed to the run_check method.
     form_class - the form class used for configuring the plugin.
 
     Required methods:
@@ -55,14 +82,12 @@ class ServicePlugin(metaclass=PluginManager):
     config_class = None
     form_class = None
 
-    def get_form_class(self):
-        return self.form
 
-
-    def run_check(self, config):
+    def run_check(self, settings):
         """
         Perfom the actual plugin check.
-        MUST throw PluginCheckError when the check fails.
+        MUST throw PluginCheckError when the check fails in some way,
+        and ServiceIsDownException if the service is determined to be down.
         """
 
         msg = "Plugin {} does not implement method run_check()".format(

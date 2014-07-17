@@ -1,3 +1,5 @@
+import datetime
+
 from django.db import models
 from django.utils.translation import ugettext as _
 from django.contrib.auth.models import User
@@ -140,3 +142,74 @@ class Service(models.Model):
 
         return get_cls_by_name(self.plugin)
 
+
+    def issue_check(self, run_locally=False):
+        if self.celery_task_id:
+            raise Exception("Another check is already in progress.")
+
+        from arguswatch.celery import checker
+
+        result = None
+        result_data = None
+
+        if run_locally:
+            result = checker.apply((self.plugin, self.plugin_config.get_settings()))
+            result_data = result.get()
+        else:
+            result = checker.delay(self.plugin, self.plugin_config.get_settings()) 
+            self.celery_task_id = result.id
+
+        self.last_issued = datetime.datetime.now()
+        self.save()
+
+        return result_data if run_locally else result
+
+
+    def determine_appropriate_check_interval(self):
+        """
+        Based on the current state and state type of the service,
+        determine which config interval should be used.
+        Available: check_interval, retry_interval_soft, retry_interval_hard.
+        """
+
+        interval = None
+
+        if self.STATE == Service.STATE_OK:
+            # State is OK.
+            # Relevant interval is the check_interval.
+            interval = self.service_config.check_interval
+        elif self.state_type == Service.STATE_TYPE_SOFT:
+            # State type is SOFT.
+            # Reagardless whether state is critical or warning,
+            # the relevant interval is retry_interval_soft
+           interval = self.service_config.retry_interval_soft
+        elif self.state_type == Service.STATE_TYPE_HARD:
+            # State type is HARD.
+            # HARD means OK, which is handled by the first if branch,
+            # or CRITICAL/WARNING.
+            # Similar to the second branch for SOFT, the relevant interval
+            # for this case is retry_interval_hard.
+            
+           interval = self.service_config.retry_interval_hard
+
+        return interval
+
+
+    def is_check_needed(self):
+        """
+        Determine, if a new check needs to be issued right now.
+        """
+
+        # Always need to check if no last_check time is set.
+        if not self.last_checked:
+            return True
+
+        interval = self.determine_appropriate_check_interval()
+        delta = datetime.timedelta(seconds=interval)
+        
+        if datetime.datetime.now() - self.last_checked >= delta:
+            # Enough time has passed, new check is needed.
+            return True
+        else:
+            # Nothing needs to be done.
+            return False

@@ -17,3 +17,7 @@ django.contrib.contenttypes
 
 
 
+Resources
+---------
+
+http://www.marinamele.com/2014/02/how-to-install-celery-on-django-and.html
