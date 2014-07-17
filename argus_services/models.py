@@ -6,6 +6,7 @@ from taggit.managers import TaggableManager
 from polymorphic import PolymorphicModel
 
 from arguswatch.utils.django import get_cls_by_name
+from arguswatch.argus_service_configurations.models import ServiceConfiguration
 
 
 class ContactGroup(models.Model):
@@ -16,7 +17,6 @@ class ContactGroup(models.Model):
     class Meta:
         verbose_name = _('ContactGroup')
         verbose_name_plural = _('ContactGroups')
-        app_label = "arguswatch"
 
     def __str__(self):
         return self.name
@@ -31,7 +31,6 @@ class Contact(models.Model):
     class Meta:
         verbose_name = _('Contact')
         verbose_name_plural = _('Contacts')
-        app_label = "arguswatch"
 
     def __str__(self):
         return self.name
@@ -44,7 +43,7 @@ class ServicePluginConfiguration(PolymorphicModel):
     """
     
     class Meta:
-        app_label = "arguswatch"
+        pass
 
 
     def __str__(self):
@@ -126,7 +125,6 @@ class Service(models.Model):
     class Meta:
         verbose_name = _('Service')
         verbose_name_plural = _('Services')
-        app_label = "arguswatch"
 
     def __str__(self):
         return self.name

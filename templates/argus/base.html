@@ -1,1 +1,19 @@
 {% extends "base.html" %}
+
+{% block content_wrap %}
+{% include "argus/nav.html" %}
+
+<h1>{% block page_title %}{% if page_title %}{{ page_title }}{% endif %}{% endblock %}</h1>
+
+{% if messages %}
+<ul class="messages">
+  {% for message in messages %}
+  <li{% if message.tags %} class="alert alert-{{ message.tags }}"{% endif %}>{{ message|safe }}</li>
+  {% endfor %}
+</ul>
+{% endif %}
+
+<div id="content" role="main">
+{% block content %}{% endblock %}
+</div>
+{% endblock %}

@@ -1,0 +1,7 @@
+{% extends "generics/update.html" %}
+
+{% block pre_form %}
+<div class="actions">
+    <a href="{% url "argus_notification_configure" pk=object.id %}" class="btn btn-primary">Configure Plugin settings</a>
+</div>
+{% endblock %}

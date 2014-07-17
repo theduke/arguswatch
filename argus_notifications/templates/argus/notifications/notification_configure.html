@@ -1,0 +1,9 @@
+{% extends "argus/base.html" %}
+{% load crispy_forms_tags %}
+
+{% block page_title %}Configure Notification - {{ service.name }}{% endblock %}
+{% block head_title %}Configure Notification - {{ service.name }}{% endblock %}
+
+{% block content %}
+{% crispy form %}
+{% endblock content %}

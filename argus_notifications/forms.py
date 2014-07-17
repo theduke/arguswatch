@@ -2,18 +2,24 @@ from django import forms
 
 from django_baseline.forms import CrispyModelForm
 
-from .models import Service
-from .plugins import ServicePlugin
+from .models import Notification
+from .plugins import NotificationPlugin
 
 
-class ServiceForm(CrispyModelForm):
+class NotificationForm(CrispyModelForm):
 
     class Meta:
-        model = Service
-        fields = ['name', 'description', 'parent', 'tags', 'plugin']
+        model = Notification
+        fields = ['name', 'description',
+            'on_ok', 
+            'on_soft_critical', 'on_soft_warning', 'on_soft_recovery',
+            'on_hard_critical', 'on_hard_warning', 'on_hard_recovery',
+            'always_on_hard_recovery',
+
+            'interval', 'interval_ok', 'interval_hard_warning',
+        ]
 
 
     def __init__(self, *args, **kwargs):
         super(ServiceForm, self).__init__(*args, **kwargs)
-        self.fields['plugin'] = forms.ChoiceField(choices=ServicePlugin.get_plugin_choices())
-
+        self.fields['plugin'] = forms.ChoiceField(choices=NotificationPlugin.get_plugin_choices())
