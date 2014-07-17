@@ -18,7 +18,7 @@ class HttpPluginConfig(ServicePluginConfiguration):
     class Meta:
         verbose_name = _('HttpPluginConfig')
         verbose_name_plural = _('HttpPluginConfigs')
-        app_label = "arguswatch"
+        app_label = "argus_services"
  
 
 

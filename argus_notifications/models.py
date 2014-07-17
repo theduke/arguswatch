@@ -20,6 +20,9 @@ class NotificationPluginConfiguration(PolymorphicModel):
     def __str__(self):
         return self.__class__.__name__
 
+# Include plugins
+from .plugins.email import EmailPluginConfig
+
 
 class Notification(models.Model):
     class Meta:
@@ -31,7 +34,7 @@ class Notification(models.Model):
     # Fully qualified package name of the notification plugin.
     plugin = models.CharField(max_length=200)
     # Relation to plugin configuration.
-    plugin_config = models.OneToOneField(NotificationPluginConfiguration, null=True, related_name='notification')
+    plugin_config = models.ForeignKey(NotificationPluginConfiguration, null=True, related_name='notification')
 
     name = models.CharField(max_length=100, help_text='Verbose name for this notification.')
     description = models.TextField(blank=True)
@@ -59,3 +62,9 @@ class Notification(models.Model):
         """
 
         return get_cls_by_name(self.plugin)
+
+
+    def __str__(self):
+        return self.name
+
+

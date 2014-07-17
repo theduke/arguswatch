@@ -28,14 +28,14 @@
       </td>
       <td class="status"></td>
       <td class="actions">
-        {% block actions %}
+        <div class="btn-group">
           {% if update_uri %}
-            {% link update_uri "Edit" url_pk=item.id classes="edit btn-sm btn-info" %} 
+            {% link update_uri "Edit" url_pk=item.id classes="edit btn btn-sm btn-info" %} 
           {% endif %}
           {% if delete_uri %}
-            {% link delete_uri "Delete" url_pk=item.id classes="delete btn-sm btn-danger" %} 
+            {% link delete_uri "Delete" url_pk=item.id classes="delete btn  btn-sm btn-danger" %} 
           {% endif %}
-        {% endblock %}
+        </div>
       </td>
     </tr>
     {% endfor %}

@@ -9,14 +9,14 @@ from ..models import NotificationPluginConfiguration
 
 class EmailPluginConfig(NotificationPluginConfiguration):
     emails = models.TextField(verbose_name='Multiple Email addresses you want to send to. Separated by semicolon (;).')
-    subject = models.CharField(max_length=255, verbose_name='Email subject (Will be appended with service name and state', blank=True)
+    subject = models.CharField(max_length=255, verbose_name='Email subject (Will be appended with service name and state)', blank=True)
     message = models.TextField('Email message body. Will be appended with service, state and description', blank=True)
 
 
     class Meta:
         verbose_name = _('EmailPluginConfig')
         verbose_name_plural = _('EmailPluginConfigs')
-        app_label = "arguswatch"
+        app_label = "argus_notifications"
 
 
 class EmailPluginForm(CrispyModelForm):

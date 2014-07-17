@@ -1,0 +1,13 @@
+{% extends "argus/base.html" %}
+
+{% block page_title %}Service {{ service.name }}{% endblock %}
+{% block head_title %}Service {{ service.name }}{% endblock %}
+
+{% block content %}
+<div class="actions btn-group">
+    <a href="{% url "argus_service_update" pk=service.id %}" class="btn btn-info">Edit</a>
+    <a href="{% url "argus_service_delete" pk=service.id %}" class="btn btn-danger">Delete</a>
+</div>
+
+
+{% endblock content %}

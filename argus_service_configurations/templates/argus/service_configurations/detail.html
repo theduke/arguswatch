@@ -1,0 +1,49 @@
+{% extends "argus/base.html" %}
+
+{% block page_title %}{{ object.name }}{% endblock %}
+{% block head_title %}{{ object.name }}{% endblock %}
+
+{% block content %}
+
+<div class="actions btn-group">
+    <a href="{% url "argus_service_configuration_update" pk=object.id %}" class="btn btn-info">Edit</a>
+    <a href="{% url "argus_service_configuration_delete" pk=object.id %}" class="btn btn-danger">Delete</a>
+</div>
+
+<p class="description">{{ object.description }}</p>
+
+<div class="notifications">
+    <h2>Notifications</h2>
+
+    <div class="actions">
+        <a href="{% url "argus_notification_create" service_pk=object.id %}" class="btn btn-primary">Add Notification</a>
+    </div>
+
+    <table class="table">
+        <tr>
+            <th>Name</th>
+            <th>Status</th>
+            <th>Actions</th>
+        </tr>
+        {% for notification in object.notifications.all %}
+        <tr class="{% if not notification.plugin_config %}warning{% else %}success{% endif %}">
+            <td>
+                <a href="{% url "argus_notification_detail" pk=notification.id %}">{{ notification.name }}</a>
+            </td>
+            <td class="">
+                {% if not notification.plugin_config %}
+                    <a href="{% url "argus_notification_configure" pk=notification.id %}" class="btn btn-danger btn-sm">Configure Plugin settings</a> 
+                {% endif %}
+            </td>
+            <td>
+                <div class="btn-group">
+                    <a class="btn btn-info btn-sm" href="{% url "argus_notification_update" pk=notification.id %}">Edit</a>
+                    <a class="btn btn-danger btn-sm" href="{% url "argus_notification_delete" pk=notification.id %}">Delete</a>
+                </div>
+            </td>
+        </tr>
+        {% endfor %}
+    </table>
+</div>
+
+{% endblock content %}

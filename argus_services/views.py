@@ -12,6 +12,7 @@ from .forms import ServiceForm
 
 class ServiceDetailView(DetailView):
     model = Service
+    template_name = "argus/services/service_detail.html"
 
 
 class ServiceListView(ListView):
@@ -73,3 +74,6 @@ def configure_service(request, pk):
         'service': service,
         'head_title': 'Configure Service - ' + str(service),
     })
+
+## Include plugins
+from .plugins.http import HttpPluginConfig

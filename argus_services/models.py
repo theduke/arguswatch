@@ -50,6 +50,9 @@ class ServicePluginConfiguration(PolymorphicModel):
         return self.__class__.__name__
 
 
+from .plugins.http import HttpPluginConfig
+
+
 class Service(models.Model):
     """
     As the centerpiece of ArgusWatch, a Service is a host or an actual service,
@@ -73,9 +76,9 @@ class Service(models.Model):
     # Fully qualified package name of the plugin.
     plugin = models.CharField(max_length=200)
     # Relation to plugin configuration.
-    plugin_config = models.OneToOneField(ServicePluginConfiguration, null=True, related_name='service')
+    plugin_config = models.ForeignKey(ServicePluginConfiguration, null=True, related_name='service')
 
-    service_config = models.ForeignKey(ServiceConfiguration, related_name='services')
+    service_config = models.ForeignKey(ServiceConfiguration, related_name='services', verbose_name=u'Service Template')
 
     enabled = models.BooleanField(default=True, help_text='Disable to pause checks and notifications for this service.')
 

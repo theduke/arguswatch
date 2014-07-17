@@ -25,19 +25,15 @@
     <tr>
       <td class="name">{{ item }}</td>
       <td class="status">
-        {% if not item.config %}
+        {% if not item.plugin_config %}
           <a href="{% url "argus_service_configure" pk=item.id %}" class="btn btn-danger">CONFIGURE NOW!</a>
         {% endif %}
       </td>
       <td class="actions">
-        {% block actions %}
-          {% if update_uri %}
-            {% link update_uri "Edit" url_pk=item.id classes="edit btn-sm btn-info" %} 
-          {% endif %}
-          {% if delete_uri %}
-            {% link delete_uri "Delete" url_pk=item.id classes="delete btn-sm btn-danger" %} 
-          {% endif %}
-        {% endblock %}
+        <div class="btn-group">
+            {% link update_uri "Edit" url_pk=item.id classes="edit btn btn-sm btn-info" %} 
+            {% link delete_uri "Delete" url_pk=item.id classes="delete btn btn-sm btn-danger" %} 
+        </div>
       </td>
     </tr>
     {% endfor %}

@@ -7,6 +7,7 @@ from django.contrib import messages
 
 from django_baseline.views import ListView, DetailView, CreateView, UpdateView, DeleteView, UserViewMixin
 
+from ..argus_service_configurations.models import ServiceConfiguration
 from .models import Notification
 from .forms import NotificationForm
 
@@ -23,6 +24,16 @@ class NotificationCreateView(UserViewMixin, CreateView):
     def get_success_url(self):
         return reverse('argus_notification_configure', kwargs={'pk': self.object.id})
 
+    def form_valid(self, form):
+        self.object = form.save(commit=False)
+
+        service_config = get_object_or_404(ServiceConfiguration, id=self.kwargs['service_pk'])
+        self.object.service_config = service_config
+        self.object.save()
+
+        return HttpResponseRedirect(self.get_success_url())
+
+
 
 class NotificationUpdateView(UpdateView):
     model = Notification
@@ -32,9 +43,16 @@ class NotificationUpdateView(UpdateView):
     template_name = 'argus/notifications/notification_update.html'
 
 
+    def get_success_url(self):
+        return reverse('argus_service_configuration_detail', kwargs={'pk': self.object.service_config.id})
+
+
 class NotificationDeleteView(DeleteView):
     model = Notification
     extra_context = {'head_title': 'Delete Notification'}
+
+    def get_success_url(self):
+        return reverse('argus_service_configuration_detail', kwargs={'pk': self.object.service_config.id})
 
 
 def configure_notification(request, pk):
@@ -56,7 +74,7 @@ def configure_notification(request, pk):
             notification.save()
 
             messages.success(request, "Notification {s} configuration updated.".format(s=notification.name))
-            return HttpResponseRedirect(reverse('argus_notification_detail', kwargs={'pk': notification.id}))
+            return HttpResponseRedirect(reverse('argus_service_configuration_detail', kwargs={'pk': notification.service_config.id}))
 
     return render(request, 'argus/notifications/notification_configure.html', {
         'form': form,

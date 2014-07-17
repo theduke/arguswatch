@@ -1,6 +1,6 @@
 from django.views.generic.edit import FormView
 from django.shortcuts import get_object_or_404, render
-from django.core.urlresolvers import reverse
+from django.core.urlresolvers import reverse, reverse_lazy
 from django.http import HttpResponseRedirect
 from django.contrib import messages
 
@@ -12,6 +12,7 @@ from .forms import ServiceConfigurationForm
 
 class ServiceConfigurationDetailView(DetailView):
     model = ServiceConfiguration
+    template_name = "argus/service_configurations/detail.html"
 
 
 class ServiceConfigurationListView(ListView):
@@ -41,7 +42,11 @@ class ServiceConfigurationUpdateView(UpdateView):
 
     template_name = 'argus/service_configurations/service_configuration_update.html'
 
+    def get_success_url(self):
+        return reverse('argus_service_configuration_detail', kwargs={'pk': self.object.id})
+
 
 class ServiceConfigurationDeleteView(DeleteView):
     model = ServiceConfiguration
     extra_context = {'head_title': 'Delete ServiceConfiguration'}
+    success_url = reverse_lazy('argus_service_configurations')

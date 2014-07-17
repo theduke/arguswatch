@@ -16,7 +16,7 @@ urlpatterns = patterns('',
     url(r'^$', 'arguswatch.views.dashboard', name='argus_dashboard'),
 
     ### argus_notifications ###
-    url(r'^notifications/add$', NotificationCreateView.as_view(), name="argus_notification_create"),
+    url(r'^notifications/add/service/(?P<service_pk>\d+)$', NotificationCreateView.as_view(), name="argus_notification_create"),
     url(r'^notifications/notification/(?P<pk>\d+)$', NotificationDetailView.as_view(), name="argus_notification_detail"),
     url(r'^notifications/notification/(?P<pk>\d+)/edit$', NotificationUpdateView.as_view(), name="argus_notification_update"),
     url(r'^notifications/notification/(?P<pk>\d+)/delete$', NotificationDeleteView.as_view(), name="argus_notification_delete"),

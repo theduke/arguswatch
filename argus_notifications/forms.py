@@ -10,7 +10,7 @@ class NotificationForm(CrispyModelForm):
 
     class Meta:
         model = Notification
-        fields = ['name', 'description',
+        fields = ['name', 'description', 'plugin',
             'on_ok', 
             'on_soft_critical', 'on_soft_warning', 'on_soft_recovery',
             'on_hard_critical', 'on_hard_warning', 'on_hard_recovery',
@@ -21,5 +21,5 @@ class NotificationForm(CrispyModelForm):
 
 
     def __init__(self, *args, **kwargs):
-        super(ServiceForm, self).__init__(*args, **kwargs)
+        super(NotificationForm, self).__init__(*args, **kwargs)
         self.fields['plugin'] = forms.ChoiceField(choices=NotificationPlugin.get_plugin_choices())
