@@ -3,7 +3,7 @@ from django.utils.translation import ugettext as _
 
 from polymorphic import PolymorphicModel
 
-from arguswatch.utils.django import get_cls_by_name
+from arguswatch.django.arguswatch.utils.django import get_cls_by_name
 from arguswatch.services.models import ServiceConfiguration
 
 
