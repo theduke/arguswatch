@@ -4,10 +4,10 @@ from django.utils.translation import ugettext as _
 from django_baseline.forms import CrispyModelForm
 
 from . import ServicePlugin
-from ..models import ServiceConfiguration
+from ..models import ServicePluginConfiguration
 
 
-class HttpPluginConfig(ServiceConfiguration):
+class HttpPluginConfig(ServicePluginConfiguration):
     url = models.URLField(max_length=500)
 
     timeout = models.IntegerField(default=30, help_text='Time allowed for server to respond')

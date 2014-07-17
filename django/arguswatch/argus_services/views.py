@@ -28,6 +28,7 @@ class ServiceListView(ListView):
 class ServiceCreateView(UserViewMixin, CreateView):
     model = Service
     form_class = ServiceForm
+    extra_context = {'head_title': 'Create Service'}
 
     def get_success_url(self):
         return reverse('argus_service_configure', kwargs={'pk': self.object.id})
@@ -36,12 +37,14 @@ class ServiceCreateView(UserViewMixin, CreateView):
 class ServiceUpdateView(UpdateView):
     model = Service
     form_class = ServiceForm
+    extra_context = {'head_title': 'Update Service'}
 
     template_name = 'argus/services/service_update.html'
 
 
 class ServiceDeleteView(DeleteView):
     model = Service
+    extra_context = {'head_title': 'Delete Service'}
 
 
 def configure_service(request, pk):
@@ -49,9 +52,7 @@ def configure_service(request, pk):
     plugin = service.get_plugin()
 
     form_cls = plugin.form_class
-    instance = service.config or plugin.config_class.objects.create()
-
-    
+    instance = service.plugin_config or plugin.config_class.objects.create()
 
     form = None
 
@@ -61,7 +62,7 @@ def configure_service(request, pk):
         form = form_cls(request.POST, instance=instance)
         if form.is_valid():
             obj = form.save()
-            service.config = obj
+            service.plugin_config = obj
             service.save()
 
             messages.success(request, "Service {s} configuration updated.".format(s=service.name))
@@ -70,4 +71,5 @@ def configure_service(request, pk):
     return render(request, 'argus/services/service_configure.html', {
         'form': form,
         'service': service,
+        'head_title': 'Configure Service - ' + str(service),
     })

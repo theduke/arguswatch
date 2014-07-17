@@ -1,5 +1,5 @@
 # Inspired by http://martyalchin.com/2008/jan/10/simple-plugin-framework/
-import importlib
+
 
 class PluginImplementationError(Exception):
     pass
@@ -68,11 +68,3 @@ class ServicePlugin(metaclass=PluginManager):
         msg = "Plugin {} does not implement method run_check()".format(
             self.__class__.__name__)
         raise PluginImplementationError(msg)
-
-
-def get_plugin_by_name(name):
-    package = name[:name.rfind('.')]
-    cls_name = name.split('.')[-1]
-    module = importlib.import_module(package)
-
-    return getattr(module, cls_name)

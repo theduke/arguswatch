@@ -1,4 +1,7 @@
 from django.conf.urls import patterns, include, url
+from django.contrib.auth.decorators import permission_required, login_required
+
+from django_baseline.decorators import group_required
 
 from .services.views import ServiceListView, ServiceCreateView, ServiceDetailView, ServiceUpdateView, ServiceDeleteView
 
@@ -8,7 +11,7 @@ urlpatterns = patterns('',
     # url(r'^$', '{{ project_name }}.views.home', name='home'),
     # url(r'^blog/', include('blog.urls')),
 
-    url(r'^$', 'core.views.home', name='home'),
+    url(r'^$', 'arguswatch.views.dashboard', name='argus_dashboard'),
 
     url(r'^services$', ServiceListView.as_view(), name="argus_services"),
     url(r'^services/add$', ServiceCreateView.as_view(), name="argus_service_create"),
