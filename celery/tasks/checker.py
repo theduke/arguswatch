@@ -1,5 +1,6 @@
 from celery import Task
 from celery.registry import tasks
+from celery.utils.log import get_task_logger
 
 from arguswatch.argus_services.models import Service
 from arguswatch.argus_services.plugins import ServiceIsDownException, PluginCheckError
@@ -10,12 +11,6 @@ class ArgusChecker(Task):
     """
     Run a check plugin.
     """
-
-    STATE_UP = "up"
-    STATE_DOWN = "down"
-    STATE_KNOWN_ERROR = "known_error"
-    STATE_UNKNOWN_ERROR = "unknown_error"
-
 
     def __init__(self):
         pass
@@ -31,17 +26,17 @@ class ArgusChecker(Task):
         """
 
         plugin = get_cls_by_name(plugin_cls_name)()
+        plugin.set_logger(get_task_logger('django'))
 
         try:
             plugin.run_check(settings)
         except PluginCheckError as e:
-            return (self.STATE_KNOWN_ERROR, e.reason)
+            return (Service.CHECK_STATE_KNOWN_ERROR, e.reason)
         except ServiceIsDownException as e:
-            return (self.STATE_DOWN, e.info)
+            return (Service.CHECK_STATE_DOWN, e.info)
         except Exception as e:
-            return (self.STATE_UNKNOWN_ERROR, '{}: {}'.format(e.__class__, e))   
+            return (Service.CHECK_STATE_UNKNOWN_ERROR, '{}: {}'.format(e.__class__, e))   
 
-        return (self.STATE_UP, '')
+        return (Service.CHECK_STATE_UP, '')
 
 tasks.register(ArgusChecker)
-checker = ArgusChecker()

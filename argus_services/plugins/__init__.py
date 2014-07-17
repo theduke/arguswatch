@@ -1,5 +1,7 @@
 # Inspired by http://martyalchin.com/2008/jan/10/simple-plugin-framework/
 
+import logging
+
 
 class PluginImplementationError(Exception):
     pass
@@ -69,6 +71,11 @@ class ServicePlugin(metaclass=PluginManager):
 
     __metaclass__ = PluginManager
 
+
+    def __init__(self):
+        self.logger = None
+
+
     @classmethod
     def get_plugins(cls):
         return cls._plugins
@@ -76,6 +83,17 @@ class ServicePlugin(metaclass=PluginManager):
     @classmethod
     def get_plugin_choices(cls):
         return [(plugin.__module__ + '.' + plugin.__name__, plugin.name) for plugin in cls.get_plugins()]
+
+
+    def set_logger(self, logger):
+        self.looger = logger
+
+
+    def get_logger(self):
+        if not self.logger:
+            self.logger = logging.getLogger('django')
+        return self.logger
+
 
     name = None
     description = None

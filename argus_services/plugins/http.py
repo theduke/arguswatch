@@ -45,9 +45,13 @@ class HttpService(ServicePlugin):
 
 
     def run_check(self, settings):
+        log = self.get_logger()
+
         import urllib.request
 
         result = None
+
+        log.debug("Checking " + settings['url'])
 
         try:
             result = urllib.request.urlopen(settings['url'], timeout=settings['timeout'])

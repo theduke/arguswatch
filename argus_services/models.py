@@ -3,6 +3,7 @@ import datetime
 from django.db import models
 from django.utils.translation import ugettext as _
 from django.contrib.auth.models import User
+from django.utils import timezone
 
 from taggit.managers import TaggableManager
 from polymorphic import PolymorphicModel
@@ -108,6 +109,19 @@ class Service(models.Model):
         STATE_CRITICAL, 'critical',
     ) 
 
+    CHECK_STATE_UP = "up"
+    CHECK_STATE_DOWN = "down"
+    CHECK_STATE_KNOWN_ERROR = "known_error"
+    CHECK_STATE_UNKNOWN_ERROR = "unknown_error"
+
+    EVENT_RECOVERY_SOFT = 'recovery_soft'
+    EVENT_RECOVERY_HARD = 'recovery_hard'
+    EVENT_CRITICAL_SOFT = 'critical_soft'
+    EVENT_CRITICAL_HARD = 'critical_hard'
+    EVENT_WARNING_SOFT = 'warning_soft'
+    EVENT_WARNING_HARD = 'warning_hard'
+    EVENT_REMAINS_UP = 'remains_up'
+
     state_type = models.PositiveSmallIntegerField(default=STATE_TYPE_HARD)
     state = models.PositiveSmallIntegerField(default=STATE_OK)
 
@@ -159,7 +173,7 @@ class Service(models.Model):
             result = checker.delay(self.plugin, self.plugin_config.get_settings()) 
             self.celery_task_id = result.id
 
-        self.last_issued = datetime.datetime.now()
+        self.last_issued = timezone.now()
         self.save()
 
         return result_data if run_locally else result
@@ -174,7 +188,7 @@ class Service(models.Model):
 
         interval = None
 
-        if self.STATE == Service.STATE_OK:
+        if self.state == Service.STATE_OK:
             # State is OK.
             # Relevant interval is the check_interval.
             interval = self.service_config.check_interval
@@ -200,6 +214,8 @@ class Service(models.Model):
         Determine, if a new check needs to be issued right now.
         """
 
+        return True
+
         # Always need to check if no last_check time is set.
         if not self.last_checked:
             return True
@@ -207,9 +223,111 @@ class Service(models.Model):
         interval = self.determine_appropriate_check_interval()
         delta = datetime.timedelta(seconds=interval)
         
-        if datetime.datetime.now() - self.last_checked >= delta:
+        if timezone.now() - self.last_checked >= delta:
             # Enough time has passed, new check is needed.
             return True
         else:
             # Nothing needs to be done.
             return False
+
+
+    def determine_event(self, state):
+        # For readability!
+        was_up = self.state == self.STATE_OK
+        was_down = not was_up
+
+
+        evt = None
+
+        if state == self.CHECK_STATE_UP:
+            # Service IS UP now.
+            
+            if was_down:
+                # Service WAS DOWN before, so trigger recovery event.
+                if self.state_type == self.STATE_TYPE_SOFT:
+                    # Soft recovery.
+                    evt = self.EVENT_RECOVERY_SOFT
+                else:
+                    # Hard recovery.
+                    evt = self.EVENT_RECOVERY_HARD
+            else:
+                evt = self.EVENT_REMAINS_UP
+        elif state == self.CHECK_STATE_DOWN:
+            # Service IS DOWN now.
+            
+            if was_up:
+                # Service WAS UP before. 
+                # Trigger critical soft event.
+                evt = self.EVENT_CRITICAL_SOFT
+            elif was_down:
+                # Service WAS alread DOWN.
+                
+                # Handle SOFT and HARD state separately.
+                if self.state_type == self.STATE_TYPE_SOFT:
+                    # Event type IS SOFT. 
+                    # We remain in SOFT, until max_retries_soft is reached.
+                    
+                    try_index = self.num_retries + 1
+                    if try_index < self.service_config.max_retries_soft:
+                        # Still retries left, so just issue SOFT WARNING.
+                        evt = self.EVENT_WARNING_SOFT
+                    else:
+                        # Maximum retries reached, so issue a HARD CRITICAL.
+                        evt = self.EVENT_CRITICAL_HARD
+                else:
+                    # Event type is HARD.
+                    # Issue HARD WARNING.
+                    evt = self.EVENT_WARNING_HARD
+
+        return evt
+
+
+    def trigger_event(self, event):
+        """
+        Adapt the state of this event based on an event type.
+        Note that the 1st argument event is one of self.CHECK_STATE_*.
+
+        DOES NOT persist service.
+        Have to persist manually!
+        """
+
+        now = timezone.now()
+
+        if event == self.EVENT_RECOVERY_HARD:
+            # Service WAS down (HARD) and CAME UP.
+            self.state_type = self.STATE_TYPE_HARD
+            self.state = self.STATE_OK
+            self.num_retries = 0
+            self.last_ok = now
+            self.last_state_change = now
+        elif event == self.EVENT_RECOVERY_SOFT:
+            # Service WAS down (SOFT) and CAME UP.
+            self.state_type = self.STATE_TYPE_HARD
+            self.state = self.STATE_OK
+            self.num_retries = 0
+            self.last_ok = now
+            self.last_state_change = now
+        elif event == self.EVENT_WARNING_HARD:
+            # Service WAS down (HARD) and IS STILL down.
+            self.state = self.STATE_WARNING
+        elif event == self.EVENT_WARNING_SOFT:
+            # Service WAS down (SOFT) and IS STILL down.
+            # max retries have not been reached yet.
+            # Just increment the counter.
+            self.state = self.STATE_WARNING
+            self.num_retries += 1
+        elif event == self.EVENT_CRITICAL_HARD:
+            # Service WAS DOWN (SOFT) and is now DOWN (HARD).
+            self.state_type = self.STATE_TYPE_HARD
+            self.state = self.STATE_CRITICAL
+            self.num_retries = 0
+            self.last_state_change = now
+        elif event == self.EVENT_CRITICAL_SOFT:
+            # Service WAS UP and went DOWN.
+            self.state_type = self.STATE_TYPE_SOFT
+            self.state = self.STATE_WARNING
+            self.last_state_change = now
+        elif event == self.EVENT_REMAINS_UP:
+            self.last_ok = now
+        else:
+            raise Exception("Unknown Service event: " + event)

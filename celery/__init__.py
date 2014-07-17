@@ -15,8 +15,11 @@ app = Celery('argus_celery',
 def add(x, y):
     return x + y
 
-from .tasks.checker import checker
-from .tasks.scheduler import scheduler
+from .tasks.checker import ArgusChecker
+checker = ArgusChecker()
+
+from .tasks.scheduler import ArgusScheduler
+scheduler = ArgusScheduler()
 
 
 if __name__ == '__main__':

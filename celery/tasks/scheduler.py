@@ -1,9 +1,16 @@
 import datetime
 
+from django.utils import timezone
+
 from celery import Task
 from celery.registry import tasks
+from celery.utils.log import get_task_logger
 
 from arguswatch.argus_services.models import Service
+
+from .checker import ArgusChecker
+
+log = get_task_logger('django')
 
 
 class ArgusScheduler(Task):
@@ -29,24 +36,34 @@ class ArgusScheduler(Task):
         Then, determine if a check should be scheduled.
         """
 
+        log.debug("Handling Service {} (id: {})".format(service, service.id))
+
         # First, check if a task is registered, and if so, process the task result.
         if service.celery_task_id:
             result  = self.AsyncResult(service.celery_task_id)
             if result.ready():
                 self.handle_check_result(service, result)
             else:
-                # Task has not finished yet, so just keep on waiting for the 
-                # result.
-                # TODO: Think about adding a time limit here.
+                # Task has not finished yet.
+                # Check if task is beyond time threshhold. If so, task is discarded and 
+                # re-issued. Otherwise, do nothing.
+
                 # TODO: add logging
-                return
+
+                if timezone.now() - service.last_issued >= datetime.timedelta(seconds=600):
+                    # Beyond threshhold, clear task id so task can be re-issued.
+                    service.celery_task_id = ''
+                else:
+                    # Nothing to do here...
+                    return
+
 
         # Either no task was running, or the running one was handled properly.
         # So proceed to check if a check needs to be scheduled.
         if service.is_check_needed():
+            log.info('Issuing check for service {}'.format(service))
             # Check is needed, so issue it.
             service.issue_check()
-
 
 
     def handle_check_result(self, service, result):
@@ -54,6 +71,31 @@ class ArgusScheduler(Task):
         Handle the result of a check.
         """
 
-        pass
+        log.info("Result for service {} is ready. Handling now...".format(service))
 
-scheduler = ArgusScheduler()
+        state, msg = result.get()
+
+        # Event to trigger.
+        evt = None
+
+        if state == Service.CHECK_STATE_UP or state == Service.CHECK_STATE_DOWN:
+            evt = service.determine_event(state)
+            log.debug("Determined evt for service {}: {}".format(service, evt))
+
+            service.trigger_event(evt)
+            service.last_checked = timezone.now()
+        elif state == Service.CHECK_STATE_KNOWN_ERROR:
+            log.warning("Service {} (plugin: {}: KNOWN_ERROR: {m}".format(
+                service, service.plugin, msg
+            ))
+        elif state == Service.CHECK_STATE_UNKNOWN_ERROR:
+            log.warning("Service {} (plugin: {}: UNKNOWN_ERROR: {}".format(
+                service, service.plugin, msg
+            ))
+
+
+        service.celery_task_id = ''
+        service.save()
+
+
+tasks.register(ArgusScheduler)
