@@ -39,15 +39,22 @@ class Notification(models.Model):
     name = models.CharField(max_length=100, help_text='Verbose name for this notification.')
     description = models.TextField(blank=True)
 
-    on_ok = models.BooleanField(default=False, help_text='Send notification if service continues to be up. (SUBJECT TO OK interval')
-    on_soft_critical = models.BooleanField(default=False, help_text='Send notification if service goes down soft.')
-    on_soft_warning = models.BooleanField(default=False, help_text='Send notification if service continues to be down on retries (SOFT state).')
-    on_soft_recovery = models.BooleanField(default=False, help_text='Send notification if service recovers from SOFT down.')
-    on_hard_critical = models.BooleanField(default=True, help_text='Send notification if service goes down hard.')
-    on_hard_warning = models.BooleanField(default=True, help_text='Send notification if service continues to be down (subject to interval_hard_warning).')
-    on_hard_recovery = models.BooleanField(default=True, help_text='Send notification if service recovers from HARD down.')
+    # Service.EVENT_REMAINS_UP
+    on_remains_up = models.BooleanField(default=False, help_text='Send notification if service continues to be up. (SUBJECT TO OK interval)')
+    # Service.EVENT_CRITICAL_SOFT
+    on_critical_soft = models.BooleanField(default=False, help_text='Send notification if service goes down soft.')
+    # Service.EVENT_WARNING_SOFT
+    on_warning_soft = models.BooleanField(default=False, help_text='Send notification if service continues to be down on retries (SOFT state).')
+    # Service.EVENT_RECOVERY_SOFT
+    on_recovery_soft = models.BooleanField(default=False, help_text='Send notification if service recovers from SOFT down.')
+    # Service.EVENT_CRITICAL_HARD
+    on_critical_hard = models.BooleanField(default=True, help_text='Send notification if service goes down hard.')
+    # Service.EVENT_WARNING_HARD
+    on_warning_hard = models.BooleanField(default=True, help_text='Send notification if service continues to be down (subject to interval_hard_warning).')
+    # Service.EVENT_RECOVERY_HARD
+    on_recovery_hard = models.BooleanField(default=True, help_text='Send notification if service recovers from HARD down.')
 
-    always_on_hard_recovery = models.BooleanField(default=True, help_text='Always send notification if service recovers (HARD)')
+    always_on_recovery_hard = models.BooleanField(default=True, help_text='Always send notification if service recovers (HARD), even if interval would prevent it.')
 
     interval = models.PositiveIntegerField(default=300, help_text=u'Notification interval in seconds.')
     interval_ok = models.PositiveIntegerField(default=0, help_text=u'Notification interval in seconds for service that stays up.')

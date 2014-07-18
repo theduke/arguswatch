@@ -1,11 +1,13 @@
 # Inspired by http://martyalchin.com/2008/jan/10/simple-plugin-framework/
 
+import logging
+
 
 class PluginImplementationError(Exception):
     pass
 
 
-class PluginCheckError(Exception):
+class NotificationPluginConfigurationError(Exception):
     pass
 
 
@@ -32,6 +34,9 @@ class NotificationPlugin(metaclass=PluginManager):
     name
     description
     config_class - the Config model for this plugin. Must inherit from arguswatch.models.ServiceConfiguration.
+                    Needs to implement get_settings() method, which returns
+                    a serializable dict used for do_notify().
+                    
     form_class - the form class used for configuring the plugin.
 
     Required methods:
@@ -42,6 +47,12 @@ class NotificationPlugin(metaclass=PluginManager):
 
     __metaclass__ = PluginManager
 
+    name = None
+    description = None
+    config_class = None
+    form_class = None
+
+
     @classmethod
     def get_plugins(cls):
         return cls._plugins
@@ -50,16 +61,34 @@ class NotificationPlugin(metaclass=PluginManager):
     def get_plugin_choices(cls):
         return [(plugin.__module__ + '.' + plugin.__name__, plugin.name) for plugin in cls.get_plugins()]
 
-    name = None
-    description = None
-    config_class = None
-    form_class = None
+
+    def __init__(self):
+        self.logger = None
+
+    def set_logger(self, logger):
+        self.looger = logger
+
+
+    def get_logger(self):
+        if not self.logger:
+            self.logger = logging.getLogger('django')
+        return self.logger
 
     def get_form_class(self):
         return self.form
 
 
-    def do_notify(self, config):
+    def build_subject_and_message(self, service, event):
+        """
+        Default implementation for generating a subject and message body
+        for an event.
+        Can be used by implementing plugins to avoid custom generation.
+        """
+
+        
+
+
+    def do_notify(self, settings, service, evt):
         """
         Perfom the actual plugin check.
         MUST throw PluginCheckError when the check fails.

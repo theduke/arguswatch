@@ -1,9 +1,11 @@
 from django.db import models
 from django.utils.translation import ugettext as _
+from django.core.mail import send_mail
+from django.conf import settings
 
 from django_baseline.forms import CrispyModelForm
 
-from . import NotificationPlugin
+from . import NotificationPlugin, NotificationPluginConfigurationError
 from ..models import NotificationPluginConfiguration
 
 
@@ -19,6 +21,13 @@ class EmailPluginConfig(NotificationPluginConfiguration):
         app_label = "argus_notifications"
 
 
+    def get_settings(self):
+        return {
+            'emails': self.emails,
+            'subject': self.subject,
+            'message': self.message
+        }
+
 class EmailPluginForm(CrispyModelForm):
     class Meta:
         model = EmailPluginConfig
@@ -30,3 +39,22 @@ class EmailNotification(NotificationPlugin):
     description = "Send Email."
     config_class = EmailPluginConfig
     form_class = EmailPluginForm
+
+
+    def do_notify(self, settings, service, event):
+        """
+        """
+
+        recipients = settings['emails'].split(';')
+        subject = settings['subject']
+        message = settings['message']
+
+        if not settings.hasattr('SERVER_EMAIL'):
+            raise NotificationPluginConfigurationError('SERVER_EMAIL not configured, and no sender email set')
+        from_email = settings.SERVER_EMAIL
+
+        send_mail(subject=subject,
+            message=message,
+            from_email=from_email,
+            recipient_list=recipients,
+        )
