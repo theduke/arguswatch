@@ -1,0 +1,34 @@
+{% load argus_tags %}
+<table class="table">
+  <tr>
+    <th>Name</th>
+    <th>Status</th>
+    <th>Last Check</th>
+    {% if can_edit %}
+    <th>Actions</th>
+    {% endif %}
+  </tr>
+
+  {% for item in services %}
+  {% with item.get_state_description as state %}
+  <tr class="{% get_state_class state %}">
+    <td class="name">
+      <a href="{% url "argus_service_detail" pk=item.id %}">{{ item }}</a>
+    </td>
+    <td class="status">{{ state }}</td>
+    <td class="last_check">{% if item.last_checked %}{{ item.last_checked|date:"d.m.Y H:i" }}{% else %}NEVER{% endif %}</td>
+    {% if can_edit %}
+    <td class="actions">
+      {% if not item.plugin_config %}
+        <a href="{% url "argus_service_configure" pk=item.id %}" class="btn btn-danger">CONFIGURE NOW!</a>
+      {% endif %}
+      <div class="btn-group">
+        <a href="{% url "argus_service_update" pk=item.id %}" class="btn btn-sm btn-info">Edit</a>
+        <a href="{% url "argus_service_delete" pk=item.id %}" class="btn btn-sm btn-danger">Delete</a>
+      </div>
+    </td>
+    {% endif %}
+  </tr>
+  {% endwith %}
+  {% endfor %}
+</table>

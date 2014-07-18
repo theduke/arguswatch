@@ -41,8 +41,6 @@ class Contact(models.Model):
 
 
 
-
-
 class ServicePluginConfiguration(PolymorphicModel):
     """
     A base class that holds the configuration for a Plugin 
@@ -190,6 +188,19 @@ class Service(models.Model):
         """
 
         return get_cls_by_name(self.plugin)
+
+
+    def get_state_description(self):
+        """
+        Returns a usable "up", "down", "unknown" or "warning"
+        """
+
+        if self.state == self.STATE_OK:
+            return "up"
+        elif sef.state_type == self.STATE_TYPE_SOFT:
+            return "warning"
+        elif self.state == self.STATE_CRITICAL:
+            return "down"
 
 
     def issue_check(self, run_locally=False):

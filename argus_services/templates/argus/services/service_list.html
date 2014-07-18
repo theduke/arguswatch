@@ -14,30 +14,7 @@
   {% endif %}
 
   {% block table %}
-  <table class="table">
-    <tr>
-      <th>Name</th>
-      <th>Status</th>
-      <th>Actions</th>
-    </tr>
-
-    {% for item in object_list %}
-    <tr>
-      <td class="name">{{ item }}</td>
-      <td class="status">
-        {% if not item.plugin_config %}
-          <a href="{% url "argus_service_configure" pk=item.id %}" class="btn btn-danger">CONFIGURE NOW!</a>
-        {% endif %}
-      </td>
-      <td class="actions">
-        <div class="btn-group">
-            {% link update_uri "Edit" url_pk=item.id classes="edit btn btn-sm btn-info" %} 
-            {% link delete_uri "Delete" url_pk=item.id classes="delete btn btn-sm btn-danger" %} 
-        </div>
-      </td>
-    </tr>
-    {% endfor %}
-  </table>
+  {% include "argus/services/service_table.html" with services=object_list %}
   {% endblock %}
 </div>
 {% endblock %}
