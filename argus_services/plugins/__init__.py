@@ -71,9 +71,10 @@ class ServicePlugin(metaclass=PluginManager):
 
     __metaclass__ = PluginManager
 
-
-    def __init__(self):
-        self.logger = None
+    name = None
+    description = None
+    config_class = None
+    form_class = None
 
 
     @classmethod
@@ -85,21 +86,16 @@ class ServicePlugin(metaclass=PluginManager):
         return [(plugin.__module__ + '.' + plugin.__name__, plugin.name) for plugin in cls.get_plugins()]
 
 
+    def __init__(self):
+        self.logger = None
+
     def set_logger(self, logger):
         self.looger = logger
-
 
     def get_logger(self):
         if not self.logger:
             self.logger = logging.getLogger('django')
         return self.logger
-
-
-    name = None
-    description = None
-    config_class = None
-    form_class = None
-
 
     def run_check(self, settings):
         """
