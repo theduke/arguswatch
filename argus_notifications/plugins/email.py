@@ -42,9 +42,11 @@ class EmailNotification(NotificationPlugin):
 
 
     def do_notify(self, settings, service_data, event, old_service_data=None):
+        subject, message = self.build_subject_and_message(service_data, event)
+
         recipients = settings['emails'].split(';')
-        subject = settings['subject']
-        message = settings['message']
+        subject = settings['subject'] + ' ' + subject
+        message = settings['message'] + '\n' + message
 
         if not hasattr(django_settings, 'SERVER_EMAIL'):
             raise NotificationPluginConfigurationError('SERVER_EMAIL not configured, and no sender email set')
