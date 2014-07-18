@@ -57,6 +57,7 @@ class ServicePluginConfiguration(PolymorphicModel):
 
 
 from .plugins.http import HttpPluginConfig
+from .plugins.ping import PingPluginConfig
 
 
 class ServiceGroup(MPTTModel):
