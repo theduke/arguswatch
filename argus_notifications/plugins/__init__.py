@@ -85,10 +85,10 @@ class NotificationPlugin(metaclass=PluginManager):
         Can be used by implementing plugins to avoid custom generation.
         """
 
-        
 
 
-    def do_notify(self, settings, service, evt):
+
+    def do_notify(self, settings, service_data, event, old_service_data=None):
         """
         Perfom the actual plugin check.
         MUST throw PluginCheckError when the check fails.

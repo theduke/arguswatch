@@ -84,18 +84,25 @@ class ArgusScheduler(Task):
 
             service.trigger_event(evt)
             service.last_checked = timezone.now()
+
+            service.celery_task_id = ''
+            service.save()
+
+            notifications = service.determine_notifications_to_send(evt)
+
+            for n in notifications:
+                log.debug("Sending notification {} for service {}".format(n, service))
+                n. do_notify(service, evt)
+
         elif state == Service.CHECK_STATE_KNOWN_ERROR:
             log.warning("Service {} (plugin: {}: KNOWN_ERROR: {m}".format(
                 service, service.plugin, msg
             ))
+            # TODO: handle with retry.
         elif state == Service.CHECK_STATE_UNKNOWN_ERROR:
+            # TODO: handle with retry.
             log.warning("Service {} (plugin: {}: UNKNOWN_ERROR: {}".format(
                 service, service.plugin, msg
             ))
-
-
-        service.celery_task_id = ''
-        service.save()
-
 
 tasks.register(ArgusScheduler)

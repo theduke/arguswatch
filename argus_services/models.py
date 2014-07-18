@@ -148,6 +148,16 @@ class Service(models.Model):
     def __str__(self):
         return self.name
 
+    def to_dict(self):
+        return {
+            'name': self.name,
+            'description': self.description,
+            'state_type': self.state_type,
+            'state': self.state,
+            'last_ok': self.last_ok,
+            'last_state_change': self.last_state_change,
+            'num_retries': self.num_retries
+        }
 
     def get_plugin(self):
         """
@@ -280,6 +290,14 @@ class Service(models.Model):
                     evt = self.EVENT_WARNING_HARD
 
         return evt
+
+
+    def determine_notifications_to_send(self, event):
+        """
+        Determine which notifications should be sent for an event.
+        """
+
+        return [n for n in self.service_config.notifications.all() if n.should_send(self, event)]
 
 
     def trigger_event(self, event):

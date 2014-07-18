@@ -1,7 +1,7 @@
 from django.db import models
 from django.utils.translation import ugettext as _
 from django.core.mail import send_mail
-from django.conf import settings
+from django.conf import settings as django_settings
 
 from django_baseline.forms import CrispyModelForm
 
@@ -41,17 +41,14 @@ class EmailNotification(NotificationPlugin):
     form_class = EmailPluginForm
 
 
-    def do_notify(self, settings, service, event):
-        """
-        """
-
+    def do_notify(self, settings, service_data, event, old_service_data=None):
         recipients = settings['emails'].split(';')
         subject = settings['subject']
         message = settings['message']
 
-        if not settings.hasattr('SERVER_EMAIL'):
+        if not hasattr(django_settings, 'SERVER_EMAIL'):
             raise NotificationPluginConfigurationError('SERVER_EMAIL not configured, and no sender email set')
-        from_email = settings.SERVER_EMAIL
+        from_email = django_settings.SERVER_EMAIL
 
         send_mail(subject=subject,
             message=message,

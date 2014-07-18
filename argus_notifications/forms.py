@@ -11,12 +11,12 @@ class NotificationForm(CrispyModelForm):
     class Meta:
         model = Notification
         fields = ['name', 'description', 'plugin',
-            'on_ok', 
-            'on_soft_critical', 'on_soft_warning', 'on_soft_recovery',
-            'on_hard_critical', 'on_hard_warning', 'on_hard_recovery',
-            'always_on_hard_recovery',
+            'on_remains_up', 
+            'on_critical_soft', 'on_warning_soft', 'on_recovery_soft',
+            'on_critical_hard', 'on_warning_hard', 'on_recovery_hard',
 
-            'interval', 'interval_ok', 'interval_hard_warning',
+            'interval', 'interval_remains_up', 'interval_warning_hard',
+            'interval_critical_hard', 'interval_recovery_hard',
         ]
 
 
