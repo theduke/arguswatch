@@ -21,6 +21,6 @@ def get_state_class(state):
     elif state == "warning":
         return "warning"
     elif state == "down":
-        return "critical"
+        return "danger"
     elif state == "unknown":
         return "warning"
