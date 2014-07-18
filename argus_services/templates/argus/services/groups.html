@@ -1,0 +1,38 @@
+{% extends "argus/base.html" %}
+{% load helpers %}
+
+{% block content %}
+<div class="generics-list">
+  
+  {% if create_uri %} 
+    {% link create_uri create_label classes="btn btn-primary" %}
+  {% endif %}
+
+  {% block table %}
+  <table class="table">
+    <tr>
+      <th>Name</th>
+      <th>Services</th>
+      <th>Actions</th>
+    </tr>
+
+    {% for item in object_list %}
+    <tr>
+      <td class="name">{{ item }}</td>
+      <td class="show_services">
+        <a href="{% url "argus_services_grouped" slug=item.slug %}" class="btn btn-sm btn-info">Services ({{ item.services.count }})</a>
+      </td>
+      <td class="actions btn-group">
+          {% if update_uri %}
+            {% link update_uri "Edit" url_pk=item.id classes="edit btn btn-sm btn-info" %} 
+          {% endif %}
+          {% if delete_uri %}
+            {% link delete_uri "Delete" url_pk=item.id classes="delete btn btn-sm btn-danger" %} 
+          {% endif %}
+      </td>
+    </tr>
+    {% endfor %}
+  </table>
+  {% endblock %}
+</div>
+{% endblock %}

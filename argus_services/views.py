@@ -21,7 +21,7 @@ class ServiceGroupListView(ListView):
         'head_title': 'Service Groups',
     }
 
-    template_name = 'generics/list_table.html'
+    template_name = 'argus/services/groups.html'
 
 
 class ServiceGroupCreateView(CreateView):
@@ -60,6 +60,20 @@ class ServiceListView(ListView):
         'update_uri': 'argus_service_update',
         'delete_uri': 'argus_service_delete',
     }
+
+
+def services_list_grouped(request, slug=None):
+    groups = ServiceGroup.objects.all()
+    if slug:
+        groups = groups.filter(slug=slug)
+
+    groups.select_related('services')
+
+    return render(request, 'argus/services/services_list_grouped.html', {
+        'head_title': 'Services by Group',
+        'page_title': 'Services by Group',
+        'groups': groups,
+    })
 
 
 class ServiceCreateView(UserViewMixin, CreateView):

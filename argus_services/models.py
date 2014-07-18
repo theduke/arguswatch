@@ -4,6 +4,7 @@ from django.db import models
 from django.utils.translation import ugettext as _
 from django.contrib.auth.models import User
 from django.utils import timezone
+from django.template.defaultfilters import slugify
 
 from taggit.managers import TaggableManager
 from mptt.models import MPTTModel, TreeForeignKey
@@ -59,8 +60,10 @@ from .plugins.http import HttpPluginConfig
 
 
 class ServiceGroup(MPTTModel):
-    name = models.CharField(max_length=100)
+    name = models.CharField(max_length=100, unique=True)
     description = models.TextField(blank=True)
+
+    slug = models.SlugField(unique=True)
 
     parent = TreeForeignKey('self', null=True, blank=True, related_name='children')
 
@@ -75,6 +78,9 @@ class ServiceGroup(MPTTModel):
     def __str__(self):
         return self.name
 
+    def save(self, *args, **kwargs):
+        self.slug = slugify(self.name)
+        super(ServiceGroup, self).save(*args, **kwargs)
 
 
 class Service(models.Model):
@@ -95,7 +101,7 @@ class Service(models.Model):
     # Service parent. Important for check hierarchy.
     parent = models.ForeignKey('Service', null=True, blank=True, related_name='children')
 
-    groups = models.ManyToManyField(ServiceGroup, null=True, blank=True)
+    groups = models.ManyToManyField(ServiceGroup, null=True, blank=True, related_name='services')
 
     #### Configuration fields. ####
 

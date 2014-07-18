@@ -3,10 +3,11 @@ from django.contrib.auth.decorators import permission_required, login_required
 
 from django_baseline.decorators import group_required
 
-from .argus_services.views import ServiceListView, ServiceCreateView, ServiceDetailView, ServiceUpdateView, ServiceDeleteView
+from .argus_services.views import ServiceListView, ServiceCreateView, ServiceDetailView, ServiceUpdateView, ServiceDeleteView, services_list_grouped
 from .argus_services.views import ServiceGroupCreateView, ServiceGroupUpdateView, ServiceGroupDeleteView, ServiceGroupListView
 from .argus_service_configurations.views import ServiceConfigurationListView, ServiceConfigurationCreateView, ServiceConfigurationDetailView, ServiceConfigurationUpdateView, ServiceConfigurationDeleteView
 from .argus_notifications.views import NotificationCreateView, NotificationDetailView, NotificationUpdateView, NotificationDeleteView
+
 
 
 urlpatterns = patterns('',
@@ -39,6 +40,7 @@ urlpatterns = patterns('',
     url(r'^service-groups/(?P<pk>\d+)/edit$', ServiceGroupUpdateView.as_view(), name="argus_service_group_update"),
     url(r'^service-groups/(?P<pk>\d+)/delete$', ServiceGroupDeleteView.as_view(), name="argus_service_group_delete"),
 
+    url(r'^services/grouped(?P<slug>[a-z0-9]+)?$', services_list_grouped, name="argus_services_grouped"),
     url(r'^services$', ServiceListView.as_view(), name="argus_services"),
     url(r'^services/add$', ServiceCreateView.as_view(), name="argus_service_create"),
     url(r'^services/service/(?P<pk>\d+)$', ServiceDetailView.as_view(), name="argus_service_detail"),

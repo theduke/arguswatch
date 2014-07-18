@@ -1,0 +1,27 @@
+{% extends "argus/base.html" %}
+{% load mptt_tags %}
+
+{% block content %}
+<ul>
+    {% recursetree groups %}
+    <li>
+        <div>
+            <h3 style="display: inline-block;">{{ node.name }}</h3>
+            <div class="actions btn-group" style="display: inline-block;">
+                <a href="{% url "argus_service_create" %}" class="btn btn-primary btn-xs">Add Service</a>
+            </div>
+        </div>
+        
+        {% if node.services.all.count %}
+        {% include "argus/services/service_table.html" with services=node.services.all %} 
+        {% endif %}
+
+        {% if not node.is_leaf_node %}
+            <ul class="children">
+                {{ children }}
+            </ul>
+        {% endif %}
+    </li>
+    {% endrecursetree %}
+</ul>
+{% endblock content %}
