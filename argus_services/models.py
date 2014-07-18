@@ -6,6 +6,7 @@ from django.contrib.auth.models import User
 from django.utils import timezone
 
 from taggit.managers import TaggableManager
+from mptt.models import MPTTModel, TreeForeignKey
 from polymorphic import PolymorphicModel
 
 from arguswatch.utils.django import get_cls_by_name
@@ -37,7 +38,10 @@ class Contact(models.Model):
 
     def __str__(self):
         return self.name
-    
+
+
+
+
 
 class ServicePluginConfiguration(PolymorphicModel):
     """
@@ -54,6 +58,25 @@ class ServicePluginConfiguration(PolymorphicModel):
 
 
 from .plugins.http import HttpPluginConfig
+
+
+class ServiceGroup(MPTTModel):
+    name = models.CharField(max_length=100)
+    description = models.TextField(blank=True)
+
+    parent = TreeForeignKey('self', null=True, blank=True, related_name='children')
+
+    class Meta:
+        verbose_name = _('ServiceGroup')
+        verbose_name_plural = _('ServiceGroups')
+
+    class MPTTMeta:
+        order_insertion_by = ['name']
+
+
+    def __str__(self):
+        return self.name
+
 
 
 class Service(models.Model):
@@ -73,6 +96,8 @@ class Service(models.Model):
 
     # Service parent. Important for check hierarchy.
     parent = models.ForeignKey('Service', null=True, blank=True, related_name='children')
+
+    groups = models.ManyToManyField(ServiceGroup, null=True, blank=True)
 
     #### Configuration fields. ####
 

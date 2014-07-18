@@ -4,15 +4,22 @@ from django_baseline.forms import CrispyModelForm
 
 from ..argus_service_configurations.models import ServiceConfiguration
 
-from .models import Service
+from .models import Service, ServiceGroup
 from .plugins import ServicePlugin
+
+
+class ServiceGroupForm(CrispyModelForm):
+
+    class Meta:
+        model = ServiceGroup
+        fields = ['name', 'description', 'parent']
 
 
 class ServiceForm(CrispyModelForm):
 
     class Meta:
         model = Service
-        fields = ['name', 'description', 'service_config',  'parent', 'tags', 'plugin']
+        fields = ['name', 'description', 'plugin', 'service_config',  'parent', 'groups', 'tags',]
 
 
     def __init__(self, *args, **kwargs):

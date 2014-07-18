@@ -1,13 +1,49 @@
 from django.views.generic.edit import FormView
 from django.shortcuts import get_object_or_404, render
-from django.core.urlresolvers import reverse
+from django.core.urlresolvers import reverse, reverse_lazy
 from django.http import HttpResponseRedirect
 from django.contrib import messages
 
 from django_baseline.views import ListView, DetailView, CreateView, UpdateView, DeleteView, UserViewMixin
 
-from .models import Service
-from .forms import ServiceForm
+from .models import Service, ServiceGroup
+from .forms import ServiceForm, ServiceGroupForm
+
+
+class ServiceGroupListView(ListView):
+    model = ServiceGroup
+    extra_context = {
+        'create_uri': 'argus_service_group_create',
+        'create_label': 'New Group',
+        'update_uri': 'argus_service_group_update',
+        'delete_uri': 'argus_service_group_delete',
+        'page_title': 'Service Groups',
+        'head_title': 'Service Groups',
+    }
+
+    template_name = 'generics/list_table.html'
+
+
+class ServiceGroupCreateView(CreateView):
+    model = ServiceGroup
+    form_class = ServiceGroupForm
+    extra_context = {
+        'head_title': 'Create Service Group',
+    }
+    success_url = reverse_lazy('argus_service_groups')
+
+
+class ServiceGroupUpdateView(UpdateView):
+    model = ServiceGroup
+    form_class = ServiceGroupForm
+    extra_context = {'head_title': 'Update Service Group'}
+    success_url = reverse_lazy('argus_service_groups')  
+
+
+class ServiceGroupDeleteView(DeleteView):
+    model = ServiceGroup
+    extra_context = {'head_title': 'Delete Service Group'}
+    success_url = reverse_lazy('argus_service_groups')
 
 
 class ServiceDetailView(DetailView):
@@ -41,11 +77,13 @@ class ServiceUpdateView(UpdateView):
     extra_context = {'head_title': 'Update Service'}
 
     template_name = 'argus/services/service_update.html'
+    success_url = reverse_lazy('argus_services')
 
 
 class ServiceDeleteView(DeleteView):
     model = Service
     extra_context = {'head_title': 'Delete Service'}
+    success_url = reverse_lazy('argus_services')
 
 
 def configure_service(request, pk):
