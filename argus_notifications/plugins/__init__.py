@@ -91,20 +91,23 @@ class NotificationPlugin(metaclass=PluginManager):
 
         name = service_data['name']
 
+        last_state_change = service_data['last_state_change'].strftime('%d.%m.%Y %H:%M') if service_data['last_state_change'] else 'NEVER'
+        last_ok = service_data['last_ok'].strftime('%d.%m.%Y %H:%M') if service_data['last_ok'] else 'NEVER'
+
         if event == Service.EVENT_REMAINS_UP:
             subject = "Service {s} is UP".format(s=name)
             msg = "Service {s} is currently up, and has been up since {c}".format(
-                s=name, c=service_data['last_state_change'].strftime('%d.%m.%Y %H:%M')
+                s=name, c=last_state_change
             )
         elif event == Service.EVENT_CRITICAL_SOFT:
             subject = "Service {s} went DOWN (soft)".format(s=name)
             msg = "Service {s} was up, but went DOWN (softly).\nThe service was up last at: {o}".format(
-                s=name, o=service_data['last_ok'].strftime('%d.%m.%Y %H:%M')
+                s=name, o=last_ok
             )
         elif event == Service.EVENT_WARNING_SOFT:
             subject = "Service {s} stays DOWN (soft)".format(s=name)
             msg = "Service {s} remains DOWN (softly).\nThe service was up last at: {o}".format(
-                s=name, o=service_data['last_ok'].strftime('%d.%m.%Y %H:%M')
+                s=name, o=last_ok
             )
         elif event == Service.EVENT_RECOVERY_SOFT:
             subject = "Service {s} RECOVERY (soft)".format(s=name)
@@ -114,17 +117,17 @@ class NotificationPlugin(metaclass=PluginManager):
         elif event == Service.EVENT_CRITICAL_HARD:
             subject = "Service {s} went DOWN".format(s=name)
             msg = "Service {s} was rechecked multiple times, but is DOWN.\nThe service was up last at: {o}".format(
-                s=name, o=service_data['last_ok'].strftime('%d.%m.%Y %H:%M')
+                s=name, o=last_ok
             )
         elif event == Service.EVENT_WARNING_HARD:
             subject = "Service {s} stays DOWN".format(s=name)
             msg = "Service {s} remains DOWN (HARD).\nThe service was up last at: {o}".format(
-                s=name, o=service_data['last_ok'].strftime('%d.%m.%Y %H:%M')
+                s=name, o=last_ok
             )
         elif event == Service.EVENT_RECOVERY_HARD:
             subject = "Service {s} RECOVERY".format(s=name)
             msg = "Service {s} was down (hard), but RECOVERED, and is UP now.\n".format(
-                s=name, o=service_data['last_ok'].strftime('%d.%m.%Y %H:%M')
+                s=name, o=last_ok
             )
         else:
             raise Exception("Unknown event: " + event)
