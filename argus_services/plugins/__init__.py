@@ -58,6 +58,7 @@ class ServicePlugin(metaclass=PluginManager):
 
     name
     description
+    is_passive   - Setting if this check is passive, and does not need to be actively run.
     config_class - the Config model for this plugin. Must inherit from arguswatch.models.ServiceConfiguration.
                    MUST implement get_settings() method, that returns serializable dict with settings needed
                    for running the check. This will be passed to the run_check method.
@@ -65,7 +66,9 @@ class ServicePlugin(metaclass=PluginManager):
 
     Required methods:
 
-    run_check(self, config) 
+    run_check(self, config) - Execute the check, as specified by the settings retrieved from the config
+                              with get_setttings() (see config_class). For ACTIVE plugins.
+    on_data_received(self, data) - Handle check data sent from some external checker. For PASSIVE plugins.
     """
 
 
@@ -73,6 +76,7 @@ class ServicePlugin(metaclass=PluginManager):
 
     name = None
     description = None
+    is_passive = False
     config_class = None
     form_class = None
 
@@ -96,6 +100,18 @@ class ServicePlugin(metaclass=PluginManager):
         if not self.logger:
             self.logger = logging.getLogger('django')
         return self.logger
+
+
+    def on_data_received(self, data):
+        """
+        Handle the data sent by an external check, and return a tuple of
+        (Service.EVENT_*, msg) with the proper event type and a message.
+        """
+
+        msg = "Plugin {} does not implement method on_data_received()".format(
+            self.__class__.__name__)
+        raise PluginImplementationError(msg)
+
 
     def run_check(self, settings):
         """

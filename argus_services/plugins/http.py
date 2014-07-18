@@ -40,6 +40,7 @@ class HttpPluginForm(CrispyModelForm):
 class HttpService(ServicePlugin):
     name = "HTTP"
     description = "Check if a website is reachable."
+    is_passive = False
     config_class = HttpPluginConfig
     form_class = HttpPluginForm
 

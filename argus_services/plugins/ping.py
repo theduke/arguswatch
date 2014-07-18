@@ -45,6 +45,7 @@ class PingPluginForm(CrispyModelForm):
 class PingService(ServicePlugin):
     name = "Ping"
     description = "Check if an IP is pingable."
+    is_passive = False
     config_class = PingPluginConfig
     form_class = PingPluginForm
 
