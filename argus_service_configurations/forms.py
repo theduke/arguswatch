@@ -14,6 +14,8 @@ class ServiceConfigurationForm(CrispyModelForm):
             'check_interval', 
             'retry_interval_soft', 'retry_interval_hard',
             'max_retries_soft',
+
+            'api_can_trigger_events',
         ]
 
 

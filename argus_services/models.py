@@ -100,6 +100,8 @@ class Service(models.Model):
     notes = models.TextField(blank=True, verbose_name='Additional notes for further information')
     tags = TaggableManager(blank=True)
 
+    slug = models.SlugField(unique=True)
+
     # Service parent. Important for check hierarchy.
     parent = models.ForeignKey('Service', null=True, blank=True, related_name='children')
 
@@ -153,6 +155,16 @@ class Service(models.Model):
     EVENT_WARNING_HARD = 'warning_hard'
     EVENT_REMAINS_UP = 'remains_up'
 
+    EVENTS = (
+        EVENT_RECOVERY_SOFT,
+        EVENT_RECOVERY_HARD,
+        EVENT_CRITICAL_SOFT,
+        EVENT_CRITICAL_HARD,
+        EVENT_WARNING_SOFT,
+        EVENT_WARNING_HARD,
+        EVENT_REMAINS_UP,
+    )
+
     state_type = models.PositiveSmallIntegerField(default=STATE_TYPE_HARD)
     state = models.PositiveSmallIntegerField(default=STATE_OK)
 
@@ -178,6 +190,12 @@ class Service(models.Model):
 
     def __str__(self):
         return self.name
+
+
+    def save(self, *args, **kwargs):
+        self.slug = slugify(self.name)
+        super(Service, self).save(*args, **kwargs)
+
 
     def to_dict(self):
         return {
@@ -205,7 +223,7 @@ class Service(models.Model):
 
         if self.state == self.STATE_OK:
             return "up"
-        elif sef.state_type == self.STATE_TYPE_SOFT:
+        elif self.state_type == self.STATE_TYPE_SOFT:
             return "warning"
         elif self.state == self.STATE_CRITICAL:
             return "down"
@@ -231,6 +249,13 @@ class Service(models.Model):
         self.save()
 
         return result_data if run_locally else result
+
+
+    def issue_passive_check(self, data, run_locally=True):
+        # TODO: implement celery execution of passive checks.
+        event = self.get_plugin()().on_data_received(data)
+        if event:
+            self.process_event(event)
 
 
     def determine_appropriate_check_interval(self):
@@ -344,13 +369,33 @@ class Service(models.Model):
         return [n for n in self.service_config.notifications.all() if n.should_send(self, event)]
 
 
+    def process_event(self, event, message):
+        """
+        Do the complete workflow that takes place, 
+        when an event occurs.
+
+        Includes the executio of trigger_event.
+        """
+
+        self.trigger_event(event)
+        self.last_checked = timezone.now()
+
+        self.celery_task_id = ''
+        self.save()
+
+        notifications = self.determine_notifications_to_send(event)
+
+        for n in notifications:
+            n. do_notify(self, event)
+
+
     def trigger_event(self, event):
         """
         Adapt the state of this event based on an event type.
         Note that the 1st argument event is one of self.CHECK_STATE_*.
 
         DOES NOT persist service.
-        Have to persist manually!
+        Persistence is handled by process_event
         """
 
         now = timezone.now()

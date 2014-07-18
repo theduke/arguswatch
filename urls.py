@@ -3,7 +3,7 @@ from django.contrib.auth.decorators import permission_required, login_required
 
 from django_baseline.decorators import group_required
 
-from .argus_services.views import ServiceListView, ServiceCreateView, ServiceDetailView, ServiceUpdateView, ServiceDeleteView, services_list_grouped
+from .argus_services.views import ServiceListView, ServiceCreateView, ServiceDetailView, ServiceUpdateView, ServiceDeleteView, services_list_grouped, service_api_passive_check, argus_api_service_event
 from .argus_services.views import ServiceGroupCreateView, ServiceGroupUpdateView, ServiceGroupDeleteView, ServiceGroupListView
 from .argus_service_configurations.views import ServiceConfigurationListView, ServiceConfigurationCreateView, ServiceConfigurationDetailView, ServiceConfigurationUpdateView, ServiceConfigurationDeleteView
 from .argus_notifications.views import NotificationCreateView, NotificationDetailView, NotificationUpdateView, NotificationDeleteView
@@ -35,6 +35,12 @@ urlpatterns = patterns('',
     ### argus_services ###
 
     # service groups
+    url(r'^api/service/(?P<pk>\d+)/passive\-check$', service_api_passive_check, name="argus_api_service_passive_check"),
+    url(r'^api/service/(?P<slug>[a-z0-9]+)/passive\-check$', service_api_passive_check, name="argus_api_service_passive_check_slugged"),
+
+    url(r'^api/service/(?P<pk>\d+)/event$', argus_api_service_event, name="argus_api_service_event"),
+    url(r'^api/service/(?P<slug>[a-z0-9]+)/event$', argus_api_service_event, name="argus_api_service_event"),
+
     url(r'^service-groups$', ServiceGroupListView.as_view(), name="argus_service_groups"),
     url(r'^service-groups/create$', ServiceGroupCreateView.as_view(), name="argus_service_group_create"),
     url(r'^service-groups/(?P<pk>\d+)/edit$', ServiceGroupUpdateView.as_view(), name="argus_service_group_update"),

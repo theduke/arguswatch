@@ -1,13 +1,17 @@
 from django.views.generic.edit import FormView
 from django.shortcuts import get_object_or_404, render
 from django.core.urlresolvers import reverse, reverse_lazy
-from django.http import HttpResponseRedirect
+from django.http import HttpResponseRedirect, HttpResponse
 from django.contrib import messages
+from django.core.exceptions import PermissionDenied
+
 
 from django_baseline.views import ListView, DetailView, CreateView, UpdateView, DeleteView, UserViewMixin
 
 from .models import Service, ServiceGroup
 from .forms import ServiceForm, ServiceGroupForm
+
+from ..utils.django import get_client_ip
 
 
 class ServiceGroupListView(ListView):
@@ -127,5 +131,71 @@ def configure_service(request, pk):
         'head_title': 'Configure Service - ' + str(service),
     })
 
-## Include plugins
-from .plugins.http import HttpPluginConfig
+def check_api_service_access(service):
+    config = service.service_config
+
+    if not config.passive_check_allowed:
+        raise PermissionDenied("Passive checks are not enabled for this service.")
+
+    # Check IP access restrictions.
+    ips = config.get_passive_check_ips()
+    if ips:
+        client_ip = get_client_ip()
+        if not client_ip in ips:
+            raise PermissionDenied("IP is not allowed to provide passive checks.")
+
+    # Validate api key, if one is configured.
+    key = config.passive_check_api_key
+    if key:
+        key_get = self.request.GET.get('api-key')
+        if key_get != key:
+            raise PermissionDenied("Required api-key not supplied.")
+
+def argus_api_service_event(request, pk=None, slug=None):
+    service = get_object_or_404(Service, pk=pk) if pk else get_object_or_404(Service, slug=slug)
+    if not service.service_config.api_can_trigger_events:
+        raise PermissionDenied("API event triggering support has not been enabled for this Service")
+
+    # TODO: add proper handling of time.
+
+    data = request.POST if request.method == 'POST' else request.GET
+    
+    check_state = data.get('state')
+    message = data.get('message')
+    time = data.get('time')
+
+    if not (check_state and message):
+        raise Exception("state or message not supplied.")
+
+    event = service.determine_event(check_state)
+    if event:
+        service.process_event(event, message)
+
+    return HttpResponse('OK')
+
+
+def service_api_passive_check(request, pk=None, slug=None):
+    service = get_object_or_404(Service, pk=pk) if pk else get_object_or_404(Service, slug=slug)
+
+    check_api_service_access(service)
+
+    # Submitter has access to service passive check.
+    # First, validate that data was supplied correctly.
+    # Either: get request with GET param data
+    # OR: POST request.
+     
+    data = None
+    if request.method == 'GET':
+        data = request.GET.get('data')
+        if not data:
+            raise Exception("GET param data not found.")
+    elif request.method == 'POST':
+        data = dict(request.POST)
+
+    # Check that service actually has a passive plugin.
+    if not service.get_plugin().is_passive:
+        raise PermissionDenied("Service does not have a passive check configured")
+
+    service.issue_passive_check(data)
+
+    return HttpResponse("OK")

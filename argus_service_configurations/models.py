@@ -24,6 +24,13 @@ class ServiceConfiguration(models.Model):
     max_retries_soft = models.PositiveSmallIntegerField(default=3, help_text='How many retries are run for a service that goes DOWN.')
 
 
+    passive_check_allowed = models.BooleanField(default=False)
+    passive_check_ips = models.TextField(blank=True, help_text='Optional list of IPs that are allowed to deliver passive checks. Separated by ;')
+    passive_check_api_key = models.CharField(max_length=100, blank=True, help_text='API key that a passive check sender must include in the request. Options: GET parameter ?api-key=KEY. Http basic auth, api-key as username, password is ignored.')
+
+    api_can_trigger_events = models.BooleanField(default=False)
+
+
     class Meta:
         verbose_name = _('ServiceConfiguration')
         verbose_name_plural = _('ServiceConfigurations')
@@ -31,3 +38,12 @@ class ServiceConfiguration(models.Model):
 
     def __str__(self):
         return self.name
+
+
+    def get_passive_check_ips(self):
+        """
+        Return the ips that are allowed to provide a passive check.
+        Returns None if all IPs are allowed to.
+        """
+
+        return self.passive_check_ips.split(";") if self.passive_check_ips else None
