@@ -68,23 +68,24 @@ urlpatterns = patterns('',
     ### argus_services ###
 
     # API
-    url(
-        r'^api/service/(?P<pk>\d+)/passive\-check$', 
-        service_api_passive_check, 
-        name="argus_api_service_passive_check"),
-    url(
-        r'^api/service/(?P<slug>[a-z0-9]+)/passive\-check$', 
-        service_api_passive_check, 
-        name="argus_api_service_passive_check_slugged"),
+    
+    #url(
+    #    r'^api/service/(?P<pk>\d+)/passive\-check$', 
+    #    service_api_passive_check, 
+    #    name="argus_api_service_passive_check"),
+    #url(
+    #    r'^api/service/(?P<slug>[a-z0-9]+)/passive\-check$', 
+    #    service_api_passive_check, 
+    #    name="argus_api_service_passive_check_slugged"),
 
-    url(
-        r'^api/service/(?P<pk>\d+)/event$', 
-        argus_api_service_event, 
-        name="argus_api_service_event"),
-    url(
-        r'^api/service/(?P<slug>[a-z0-9]+)/event$', 
-        argus_api_service_event, 
-        name="argus_api_service_event"),
+    #url(
+    #    r'^api/service/(?P<pk>\d+)/event$', 
+    #    argus_api_service_event, 
+    #    name="argus_api_service_event"),
+    #url(
+    #    r'^api/service/(?P<slug>[a-z0-9]+)/event$', 
+    #    argus_api_service_event, 
+    #    name="argus_api_service_event"),
 
     ### ServiceGroup views ###
     url(
