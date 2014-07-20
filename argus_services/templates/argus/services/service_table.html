@@ -23,7 +23,7 @@
     {% if can_control %}
     <td class="control">
       <div class="btn-group">
-        <a href="{% url "argus_service_run" pk=item.id %}" class="btn btn-sm btn-warning">Run Check</a>
+        <a href="{% url "argus_service_check" pk=item.id %}" class="btn btn-sm btn-warning">Run Check</a>
       </div>
     </td>
     {% endif %}

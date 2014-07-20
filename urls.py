@@ -54,5 +54,5 @@ urlpatterns = patterns('',
     url(r'^services/service/(?P<pk>\d+)/delete$', ServiceDeleteView.as_view(), name="argus_service_delete"),
     url(r'^services/service/(?P<pk>\d+)/configure$', 'arguswatch.argus_services.views.configure_service', name="argus_service_configure"),
 
-    url(r'^services/service/(?P<pk>\d+)/run$', 'arguswatch.argus_services.views.run_service_check', name="argus_service_run"),
+    url(r'^services/service/(?P<pk>\d+)/run$', 'arguswatch.argus_services.views.run_service_check', name="argus_service_check"),
 )

@@ -4,10 +4,19 @@
 {% block head_title %}Service {{ service.name }}{% endblock %}
 
 {% block content %}
+{% if can_edit %}
+<div>
 <div class="actions btn-group">
     <a href="{% url "argus_service_update" pk=service.id %}" class="btn btn-info">Edit</a>
     <a href="{% url "argus_service_delete" pk=service.id %}" class="btn btn-danger">Delete</a>
 </div>
-
-
+</div>
+{% endif %}
+{% if can_control %}
+<div>
+    <div class="actions btn-group">
+        <a href="{% url "argus_service_check" pk=service.id %}" class="btn btn-warning">Run Check</a>
+    </div>
+</div>
+{% endif %}
 {% endblock content %}

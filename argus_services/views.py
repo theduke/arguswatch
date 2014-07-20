@@ -6,7 +6,7 @@ from django.contrib import messages
 from django.core.exceptions import PermissionDenied
 
 
-from django_baseline.views import ListView, DetailView, CreateView, UpdateView, DeleteView, UserViewMixin
+from django_baseline.views import ListView, DetailView, CreateView, UpdateView, DeleteView, UserViewMixin, ExtraContextMixin
 
 from .models import Service, ServiceGroup
 from .forms import ServiceForm, ServiceGroupForm
@@ -50,9 +50,13 @@ class ServiceGroupDeleteView(DeleteView):
     success_url = reverse_lazy('argus_service_groups')
 
 
-class ServiceDetailView(DetailView):
+class ServiceDetailView(ExtraContextMixin, DetailView):
     model = Service
     template_name = "argus/services/service_detail.html"
+    extra_context = {
+        'can_edit': True,
+        'can_control': True,
+    }
 
 
 class ServiceListView(ListView):
@@ -217,7 +221,7 @@ def run_service_check(request, pk):
     return render(request, 'argus/services/run_service_check.html', {
         'page_title': 'Check of Service ' + str(service),
         'head_title': 'Check of Service ' + str(service),
-        'status': result['status'],
+        'status': result['state'],
         'message': result['message'],
         'log': result['logs'],
         'service': service,

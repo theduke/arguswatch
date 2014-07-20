@@ -266,19 +266,12 @@ class Service(models.Model):
             logger.addHandler(handler)
 
             result = checker.apply((self.plugin, self.plugin_config.get_settings()), {'logger': logger})
+            result_data = self.handle_check_result(result, log=logger)
 
-            status, msg = result.get()
             # Flush logging handler to ensure all logs are written to streamIO stream.
             handler.flush()
-
-            result_data = {
-                'status': status,
-                'message': msg,
-                'logs': stream.getvalue(),
-            }
-
+            result_data['logs'] = stream.getvalue()
             stream.close()
-
         else:
             result = checker.delay(self.plugin, self.plugin_config.get_settings()) 
             self.celery_task_id = result.id
@@ -287,6 +280,33 @@ class Service(models.Model):
         self.save()
 
         return result_data if run_locally else result
+
+
+    def handle_check_result(self, result, log=None):
+        if not log:
+            log = logging.getLogger('django.argus')
+
+        state, message = result.get()
+
+        # Event to trigger.
+        event = None
+
+        if state == Service.CHECK_STATE_UP or state == Service.CHECK_STATE_DOWN:
+            event = self.determine_event(state)
+            log.debug("Determined event for service {}: {}".format(self, event))
+            self.process_event(event, message)
+        elif state == Service.CHECK_STATE_KNOWN_ERROR:
+            # TODO: handle with retry.
+            pass
+        elif state == Service.CHECK_STATE_UNKNOWN_ERROR:
+            # TODO: handle with retry.
+            pass
+
+        return {
+            'state': state,
+            'message': message,
+            'event': event,
+        }
 
 
     def issue_passive_check(self, data, run_locally=True):
