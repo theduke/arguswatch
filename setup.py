@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 from setuptools import setup, find_packages  # Always prefer setuptools over distutils
 from codecs import open  # To use a consistent encoding
 from os import path
@@ -5,10 +7,10 @@ from os import path
 here = path.abspath(path.dirname(__file__))
 
 # Get the long description from the relevant file
-with open(path.join(here, 'README.rst'), encoding='utf-8') as f:
+with open(path.join(here, 'README.md'), encoding='utf-8') as f:
     long_description = f.read()
 
-with open(path.join(here, 'VERSION')) as f:
+with open(path.join(here, 'VERSION'), 'r') as f:
     version = f.read().strip()
 
 setup(
@@ -47,21 +49,37 @@ setup(
 
     keywords='monitoring',
 
-    packages=find_packages(exclude=['contrib', 'docs', 'tests*']),
+    packages=find_packages(exclude=[]),
 
     # List run-time dependencies here.  These will be installed by pip when your
     # project is installed. For an analysis of "install_requires" vs pip's
     # requirements files see:
     # https://packaging.python.org/en/latest/technical.html#install-requires-vs-requirements-files
-    install_requires=[],
+    install_requires=[
+	'Django>=1.6,<1.7',
+	'South>=1',
+	'celery>=3.1',
+	'django-baseline>=0.2.2',
+	'django-crispy-forms>=1.4',
+	'django-filter>=0.7',
+	'django-mptt>=0.6',
+	'django-polymorphic>=0.5.5',
+	'django-sekizai>=0.7',
+	'django-taggit>=0.12',
+	'djangorestframework>=2.3',
+	'pytz>=2014.4',
+	'PyMySQL>=0.6',
+    ],
+
+    include_package_data=True,
 
     # If there are data files included in your packages that need to be
     # installed, specify them here.  If using Python 2.6 or less, then these
     # have to be included in MANIFEST.in as well.
-    package_data={
+    #package_data={
         #'sample': ['package_data.dat'],
-	'': ['*.html', '*.js', '*.css'],
-    },
+	#'': ['*.html', '*.js', '*.css'],
+    #},
 
     # Although 'package_data' is the preferred approach, in some case you may
     # need to place data files outside of your packages.
