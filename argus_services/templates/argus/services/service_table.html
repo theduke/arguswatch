@@ -16,7 +16,7 @@
       <a href="{% url "argus_service_detail" pk=item.id %}">{{ item }}</a>
     </td>
     <td class="status">{{ state }}</td>
-    <td class="last_check">{% if item.last_checked %}{{ item.last_checked|date:"d.m.Y H:i" }}{% else %}NEVER{% endif %}</td>
+    <td class="last_check">{% if item.last_checked %}{{ item.last_checked|date:"d.m.Y H:i:s" }}{% else %}NEVER{% endif %}</td>
     {% if can_edit %}
     <td class="actions">
       {% if not item.plugin_config %}
