@@ -59,6 +59,8 @@ class ServicePluginConfiguration(PolymorphicModel):
 from .plugins.http import HttpPluginConfig
 from .plugins.ping import PingPluginConfig
 from .plugins.port import PortPluginConfig
+from .plugins.noop import NoOpPluginConfig
+from .plugins.sql_query import SQLQueryPluginConfig
 
 
 class ServiceGroup(MPTTModel):
@@ -132,6 +134,7 @@ class Service(models.Model):
         (STATE_TYPE_HARD, 'hard'),
     )
 
+    STATE_UNKNOWN = 0
     STATE_OK = 1
     STATE_WARNING = 2
     STATE_CRITICAL = 3
@@ -166,7 +169,7 @@ class Service(models.Model):
     )
 
     state_type = models.PositiveSmallIntegerField(default=STATE_TYPE_HARD)
-    state = models.PositiveSmallIntegerField(default=STATE_OK)
+    state = models.PositiveSmallIntegerField(default=STATE_UNKNOWN)
 
     # The last time a check was issued.
     last_issued = models.DateTimeField(null=True)
@@ -198,6 +201,10 @@ class Service(models.Model):
 
 
     def to_dict(self):
+        """
+        Convert to a dictionary, with the most important fields.
+        """
+        
         return {
             'name': self.name,
             'description': self.description,
@@ -221,6 +228,8 @@ class Service(models.Model):
         Returns a usable "up", "down", "unknown" or "warning"
         """
 
+        if self.state == self.STATE_UNKNOWN:
+            return 'unknown'
         if self.state == self.STATE_OK:
             return "up"
         elif self.state_type == self.STATE_TYPE_SOFT:
@@ -293,7 +302,9 @@ class Service(models.Model):
         Determine, if a new check needs to be issued right now.
         """
 
-        return True
+        # For passive plugins, check is never needed.
+        if self.get_plugin().is_passive:
+            return False
 
         # Always need to check if no last_check time is set.
         if not self.last_checked:
