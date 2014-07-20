@@ -118,7 +118,7 @@ class Service(models.Model):
     # Relation to plugin configuration.
     plugin_config = models.ForeignKey(ServicePluginConfiguration, null=True, related_name='service')
 
-    service_config = models.ForeignKey(ServiceConfiguration, related_name='services', verbose_name=u'Service Template')
+    service_config = models.ForeignKey(ServiceConfiguration, related_name='services', verbose_name='Service Template')
 
     enabled = models.BooleanField(default=True, help_text='Disable to pause checks and notifications for this service.')
 

@@ -58,11 +58,11 @@ class Notification(models.Model):
     # Service.EVENT_RECOVERY_HARD
     on_recovery_hard = models.BooleanField(default=True, help_text='Send notification if service recovers from HARD down.')
 
-    interval = models.PositiveIntegerField(default=60*30, help_text=u'Notification interval in seconds.')
-    interval_remains_up = models.PositiveIntegerField(default=60*60*24, help_text=u'Notification interval in seconds for service that stays up.')
-    interval_warning_hard = models.PositiveIntegerField(default=60*60, help_text=u'Notification interval in seconds for service that stays DOWN (hard).')
-    interval_critical_hard = models.PositiveIntegerField(default=10*60, help_text=u'Notification interval in seconds for service that GOES DOWN (hard).')
-    interval_recovery_hard = models.PositiveIntegerField(default=10*60, help_text=u'Notification interval in seconds for service that COMES UP (hard).')
+    interval = models.PositiveIntegerField(default=60*30, help_text='Notification interval in seconds.')
+    interval_remains_up = models.PositiveIntegerField(default=60*60*24, help_text='Notification interval in seconds for service that stays up.')
+    interval_warning_hard = models.PositiveIntegerField(default=60*60, help_text='Notification interval in seconds for service that stays DOWN (hard).')
+    interval_critical_hard = models.PositiveIntegerField(default=10*60, help_text='Notification interval in seconds for service that GOES DOWN (hard).')
+    interval_recovery_hard = models.PositiveIntegerField(default=10*60, help_text='Notification interval in seconds for service that COMES UP (hard).')
 
 
     def should_send(self, service, evt):
