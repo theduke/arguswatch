@@ -1,5 +1,7 @@
 from django import template
 
+from arguswatch.argus_services.models import Service
+
 register = template.Library()
 
 # Create your own template tags here.
@@ -15,6 +17,9 @@ def get_state_class(state):
     Get a css class for a state returned by 
     Service.get_state_description()
     """
+
+    if type(state) == Service:
+        state = state.get_state_description()
 
     if state == "up":
         return "success"

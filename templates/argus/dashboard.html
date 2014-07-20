@@ -4,5 +4,22 @@
 {% block head_title %}ArgusWatch{% endblock %}
 
 {% block content %}
-Dashboard
+
+<div class="panel panel-danger">
+    <div class="panel-heading">Critical</div>
+    <div class="panel-body">
+        {% include "argus/services/service_table.html" with services=services_critical %}
+    </div>
+</div>
+
+
+<div class="panel panel-warning">
+    <div class="panel-heading">Warnings</div>
+    <div class="panel-body">
+        {% include "argus/services/service_table.html" with services=services_warning %}
+    </div>
+</div>
+
+
+
 {% endblock content %}

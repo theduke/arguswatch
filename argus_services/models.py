@@ -224,6 +224,13 @@ class Service(models.Model):
 
         return get_cls_by_name(self.plugin)
 
+    def get_plugin_name(self):
+        """
+        Get the pretty plugin name.
+        """
+
+        return self.get_plugin().name
+
 
     def get_state_description(self):
         """
@@ -236,8 +243,19 @@ class Service(models.Model):
             return "up"
         elif self.state_type == self.STATE_TYPE_SOFT:
             return "warning"
-        elif self.state == self.STATE_CRITICAL:
+        elif self.state in (self.STATE_CRITICAL, self.STATE_WARNING):
             return "down"
+
+
+    def get_state_display(self):
+        for row in self.STATE_CHOICES:
+            if row[0] == self.state:
+                return row[1]
+
+    def get_state_type_display(self):
+        for row in self.STATE_TYPE_CHOICES:
+            if row[0] == self.state_type:
+                return row[1]
 
 
     def issue_check(self, run_locally=False):
@@ -477,6 +495,7 @@ class Service(models.Model):
         elif event == self.EVENT_WARNING_HARD:
             # Service WAS down (HARD) and IS STILL down.
             self.state = self.STATE_WARNING
+            self.num_retries += 1
         elif event == self.EVENT_WARNING_SOFT:
             # Service WAS down (SOFT) and IS STILL down.
             # max retries have not been reached yet.

@@ -1,4 +1,5 @@
 {% load argus_tags %}
+{% if services %}
 <table class="table">
   <tr>
     <th>Name</th>
@@ -18,8 +19,15 @@
     <td class="name">
       <a href="{% url "argus_service_detail" pk=item.id %}">{{ item }}</a>
     </td>
-    <td class="status">{{ state }}</td>
-    <td class="last_check">{% if item.last_checked %}{{ item.last_checked|date:"d.m.Y H:i:s" }}{% else %}NEVER{% endif %}</td>
+    <td class="status">
+      {% if state == "down" or state == "warning" %}
+      {{ state }}<br />
+      Last OK: {{ item.last_ok|timesince }} ago
+      {% else %} 
+      {{ state }}
+      {% endif %}
+    </td>
+    <td class="last_check">{% if item.last_checked %}{{ item.last_checked|timesince }} ago{% else %}NEVER{% endif %}</td>
     {% if can_control %}
     <td class="control">
       <div class="btn-group">
@@ -42,3 +50,6 @@
   {% endwith %}
   {% endfor %}
 </table>
+{% else %}
+No matching services.
+{% endif %}

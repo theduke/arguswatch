@@ -1,15 +1,15 @@
 {% extends "argus/base.html" %}
 {% load helpers %}
 
-{% block page_title %}Service Configurations{% endblock %}
-{% block head_title %}Service Configurations{% endblock %}
+{% block page_title %}Service Templates{% endblock %}
+{% block head_title %}Service Templates{% endblock %}
 
 {% block content %}
 <div class="generics-list">
   
   {% if create_uri %} 
     <div class="actions">
-        {% link create_uri create_label classes="btn btn-primary" %}
+        {% link create_uri "New Template" classes="btn btn-primary" %}
     </div>
   {% endif %}
 

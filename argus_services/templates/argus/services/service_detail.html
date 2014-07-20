@@ -1,22 +1,192 @@
 {% extends "argus/base.html" %}
+{% load argus_tags %}
 
 {% block page_title %}Service {{ service.name }}{% endblock %}
 {% block head_title %}Service {{ service.name }}{% endblock %}
 
 {% block content %}
-{% if can_edit %}
-<div>
-<div class="actions btn-group">
-    <a href="{% url "argus_service_update" pk=service.id %}" class="btn btn-info">Edit</a>
-    <a href="{% url "argus_service_delete" pk=service.id %}" class="btn btn-danger">Delete</a>
+
+<div class="main-status">
+    {% if service.enabled %}
+    <p class="alert alert-{% get_state_class service %}" style="display: inline-block;">
+        Service is <strong>{{ service.get_state_description }}</strong>
+    </p>
+    {% else %}
+    <p class="alert alert-warning" style="display: inline-block;">Service is currently <strong>DISABLED</strong>.</p>
+    {% endif %}
 </div>
-</div>
-{% endif %}
-{% if can_control %}
-<div>
-    <div class="actions btn-group">
-        <a href="{% url "argus_service_check" pk=service.id %}" class="btn btn-warning">Run Check</a>
+
+<div class="row">
+    <div class="col-sm-6">
+        <div class="panel panel-info">
+            <div class="panel-heading">
+                Info
+                {% if can_edit %}
+                <div class="btn-group" style="margin-left: 4em;">
+                    <a href="{% url "argus_service_update" pk=service.id %}" class="btn btn-sm btn-info">Edit</a>
+                    <a href="{% url "argus_service_delete" pk=service.id %}" class="btn btn-sm btn-danger">Delete</a>
+                </div>
+            {% endif %}
+            </div>
+            <div class="panel-body">
+                <table class="table">
+                    <tr>
+                        <th>Name</th>
+                        <td>{{ service.name }}</td>
+                    </tr>
+                    {% if service.description %}
+                    <tr>
+                        <th>Description</th>
+                        <td>{{ service.description }}</td>
+                    </tr>
+                    {% endif %}
+                   <tr>
+                        <th>Check Type</th>
+                        <td>{{ service.get_plugin_name }}</td>
+                    </tr>
+                    <tr>
+                        <th>Service Template</th>
+                        <td>
+                            {% if service.service_config.is_template %}
+                            <a href="{% url "argus_service_configuration_detail" pk=service.service_config.id %}">{{ service.service_config.name }}</a>
+                            {% else %}
+                            <strong>Custom Config</strong>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% if service.parent %}
+                    <tr>
+                        <th>Parent service</th>
+                        <td>
+                            <a href="{% url "argus_service_detail" pk=service.parent.id %}">{{ service.parent }}</a>
+                        </td>
+                    </tr>
+                    {% endif %}
+                    {% if service.children.all %}
+                    <tr>
+                        <th>Child services</th>
+                        <td>
+                            {% for child in service.children.all %}
+                            <a href="{% url "argus_service_detail" pk=service.parent.id %}">{{ child }}</a>
+                            {% if not forloop.last %},&nbsp;{% endif %}
+                            {% endfor %}
+                        </td>
+                    </tr>
+                    {% endif %}
+                    {% if service.groups.all %}
+                    <tr>
+                         <th>Groups</th>
+                         <td>
+                            {% for group in service.groups.all %}
+                            <a href="{% url "argus_services_grouped" slug=group.slug %}">{{ group }}</a>
+                            {% if not forloop.last %},{% endif %}
+                            {% endfor %}
+                         </td>
+                     </tr> 
+                    {% endif %}
+                    {% if service.tags.all %}
+                    <tr>
+                        <th>Tags</th>
+                        <td>
+                            {% for tag in service.tags.all %}
+                            <span class="label label-default">
+                                {{ tag.name }}
+                            </span>
+                            &nbsp;
+                            {% endfor %}
+                        </td>
+                    </tr>
+                    {% endif %}
+                    <tr>
+                        <th>Created at</th>
+                        <td>{{ service.created_at|date }}</td>
+                    </tr>
+                    <tr>
+                        <th>Created by</th>
+                        <td>{{ service.created_by }}</td>
+                    </tr>
+                </table><!-- </.table-info> -->
+            </div>
+        </div>
+    </div>
+
+    <div class="col-sm-6">
+        <div class="panel panel-info">
+            <div class="panel-heading">Status</div>
+            <div class="panel-body">
+                {% if not service.enabled %}
+                <div class="alert alert-warning">
+                    Service is <strong>disabled.</strong><br />
+                    Enable to activate checking.
+                </div>
+                {% else %}
+                <table class="table">
+                    <tr class="alert-{% get_state_class service %}">
+                        <th>Status</th>
+                        <td>{{ service.get_state_description }}</td>
+                    </tr>
+                    <tr>
+                        <th>Last OK</th>
+                        <td>
+                            {% if service.last_ok %}
+                            {{ service.last_ok|timesince }}
+                            {% else %}
+                            NEVER
+                            {% endif %}
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>Last checked</th>
+                        <td>
+                            {% if service.last_checked %}
+                            {{ service.last_checked|timesince }}
+                            {% else %}
+                            NEVER
+                            {% endif %}
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>Last check issued</th>
+                        <td>
+                            {% if service.last_issued %}
+                            {{ service.last_issued|timesince }}
+                            {% else %}
+                            NEVER
+                            {% endif %}
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>State</th>
+                        <td>{{ service.get_state_display }}</td>
+                    </tr>
+                    <tr>
+                        <th>State type</th>
+                        <td>{{ service.get_state_type_display }}</td>
+                    </tr>
+                    <tr>
+                        <th>Retries</th>
+                        <td>{{ service.num_retries }}</td>
+                    </tr>
+                    {% if can_control %}
+                    <tr>
+                        <th>Manually run check</th>
+                        <td>
+                            <a href="{% url "argus_service_check" pk=service.id %}" class="btn btn-warning">Run check</a>
+                            <p>
+                                In urgent cases, you can run a check manually.<br />
+                                This check will be run <strong>by the webserver</strong>, and not by 
+                                a Celery worker.<br />
+                                <strong>Only do this if really neccessary, and you know what you are doing!</strong>
+                            </p>
+                        </td>
+                    </tr>
+                    {% endif %}
+                </table>
+                {% endif %}
+            </div>
+        </div>
     </div>
 </div>
-{% endif %}
+
+
 {% endblock content %}

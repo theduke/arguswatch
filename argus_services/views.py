@@ -59,6 +59,7 @@ class ServiceDetailView(ExtraContextMixin, DetailView):
         'can_edit': True,
         'can_control': True,
     }
+    select_related = ('service_config', 'plugin_config', 'tags', 'parent', 'children')
 
 
 class ServiceListView(FilterView):
