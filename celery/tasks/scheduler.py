@@ -20,6 +20,8 @@ class ArgusScheduler(Task):
     as well as issuing new checks when time limits are reached.
     """
 
+    name = "arguswatch.scheduler"
+
 
     def __init__(self):
         pass

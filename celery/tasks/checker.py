@@ -12,6 +12,8 @@ class ArgusChecker(Task):
     Run a check plugin.
     """
 
+    name = "arguswatch.checker"
+
     def __init__(self):
         pass
 
