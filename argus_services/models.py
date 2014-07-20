@@ -195,9 +195,6 @@ class Service(models.Model):
 
         permissions = (
             ("view_service", "Can view service"),
-            ("add_service", "Can add service"),
-            ("change_service", "Can change service"),
-            ("delete_service", "Can delete service"),
             ("run_service_check", "Can run service check"),
             ("issue_service_check", "Can issue service check"),
         )
