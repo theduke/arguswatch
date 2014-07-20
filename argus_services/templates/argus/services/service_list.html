@@ -7,15 +7,11 @@
 {% block content %}
 
 <div class="generics-list">
-    
-    <div>
-        <a href="{% url "argus_services_grouped_all" %}" class="btn btn-lg btn-info">Show Services by Group</a>
-    </div>
-  
   {% if create_uri %} 
     <div class="actions">
         {% link create_uri create_label classes="btn btn-primary" %}
     </div>
+    <br />
   {% endif %}
 
   {% block table %}

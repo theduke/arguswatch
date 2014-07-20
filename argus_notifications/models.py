@@ -130,17 +130,19 @@ class Notification(models.Model):
 
         return self.plugin_config.get_settings()
 
+    def get_service_notification_for_service(self, service):
+        return self.service_notifications.filter(service=service).first() or \
+            ServiceNotifications(service=service, notification=self)
+
 
     def do_notify(self, service, event, old_service_data=None):
         plugin = self.get_plugin()()
         plugin.do_notify(self.get_plugin_settings(), service.to_dict(), event, old_service_data)
 
-        sent_data = self.service_notifications.filter(service=service).first() or \
-                    ServiceNotifications(service=service, notification=self)
+        sent_data = self.get_service_notification_for_service(service)
 
         sent_data.last_sent = timezone.now()
         sent_data.save()
-
 
     def __str__(self):
         return self.name
@@ -148,7 +150,7 @@ class Notification(models.Model):
 
 class ServiceNotifications(models.Model):
     notification = models.ForeignKey(Notification, related_name='service_notifications')
-    service = models.ForeignKey(Service, related_name='service_notifications')
+    service = models.ForeignKey(Service, related_name='notifications')
     last_sent = models.DateTimeField()
 
     class Meta:

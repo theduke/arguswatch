@@ -185,6 +185,32 @@
                 {% endif %}
             </div>
         </div>
+
+        <div class="panel panel-info">
+            <div class="panel-heading">Notifications sent</div>
+            <div class="panel-body">
+                <table class="table">
+                    <tr>
+                        <th>Notification</th>
+                        <th>Type</th>
+                        <th>Last sent</th>
+                    </tr>
+                    {% for sn in service.notifications.all %}
+                    <tr>
+                        <td>{{ sn.notification }}</td>
+                        <td>{{ sn.notification.get_plugin.name }}</td>
+                        <td>
+                            {% if sn.last_sent %}
+                            {{ sn.last_sent|timesince }}                                    
+                            {% else %}
+                            NEVER
+                            {% endif %}    
+                        </td>
+                    </tr> 
+                    {% endfor %}
+                </table>
+            </div>
+        </div>
     </div>
 </div>
 
