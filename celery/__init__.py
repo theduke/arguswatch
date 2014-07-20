@@ -1,6 +1,7 @@
 import os
-from celery import Celery
+from datetime import timedelta
 
+from celery import Celery
 
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "crevo_base.settings")
 from django.conf import settings
@@ -10,6 +11,15 @@ from django.conf import settings
 app = Celery('argus_celery', 
     broker='amqp://localhost', 
     backend="amqp://localhost")
+
+app.conf.update(
+    CELERYBEAT_SCHEDULE = {
+    'run-scheduler': {
+        'task': 'arguswatch.scheduler',
+        'schedule': timedelta(seconds=5),
+        'args': [],
+    },
+})
 
 @app.task
 def add(x, y):
