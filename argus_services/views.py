@@ -5,11 +5,13 @@ from django.http import HttpResponseRedirect, HttpResponse
 from django.contrib import messages
 from django.core.exceptions import PermissionDenied
 
+from django_filters.views import FilterView
 
 from django_baseline.views import ListView, DetailView, CreateView, UpdateView, DeleteView, UserViewMixin, ExtraContextMixin
 
 from .models import Service, ServiceGroup
 from .forms import ServiceForm, ServiceGroupForm
+from .filters import ServiceFilter
 
 from ..utils.django import get_client_ip
 
@@ -59,8 +61,8 @@ class ServiceDetailView(ExtraContextMixin, DetailView):
     }
 
 
-class ServiceListView(ListView):
-    model = Service
+class ServiceListView(FilterView):
+    filterset_class = ServiceFilter
     template_name = "argus/services/service_list.html"
     extra_context = {
         'create_uri': 'argus_service_create',
@@ -71,13 +73,24 @@ class ServiceListView(ListView):
         'can_edit': True,
     }
 
+    def get_context_data(self, **kwargs):
+        context = super(ServiceListView, self).get_context_data(**kwargs)
+        # Add model verbose name to the context if needed in template.
+        context.update(self.extra_context)
+        return context
+
 
 def services_list_grouped(request, slug=None):
-    groups = ServiceGroup.objects.all()
-    if slug:
-        groups = groups.filter(slug=slug)
+    groups = None
 
+    if slug:
+        group = get_object_or_404(ServiceGroup, slug=slug)
+        groups = group.get_descendants(include_self=True)
+    else:
+        groups = ServiceGroup.objects.all()
     groups.select_related('services')
+
+    filter = ServiceFilter(request.GET, queryset=groups)
 
     return render(request, 'argus/services/services_list_grouped.html', {
         'head_title': 'Services by Group',
@@ -85,6 +98,7 @@ def services_list_grouped(request, slug=None):
         'groups': groups,
         'can_control': True,
         'can_edit': True,
+        'filter': filter,
     })
 
 

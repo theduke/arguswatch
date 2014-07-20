@@ -142,9 +142,9 @@ class Service(models.Model):
     STATE_CRITICAL = 3
 
     STATE_CHOICES = (
-        STATE_OK, 'ok',
-        STATE_WARNING, 'warning',
-        STATE_CRITICAL, 'critical',
+        (STATE_OK, 'ok'),
+        (STATE_WARNING, 'warning'),
+        (STATE_CRITICAL, 'critical'),
     ) 
 
     CHECK_STATE_UP = "up"

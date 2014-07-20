@@ -13,24 +13,12 @@ app = Celery('argus_celery',
     backend="amqp://localhost")
 
 app.conf.update(
-    CELERYBEAT_SCHEDULE = {
-    'run-scheduler': {
-        'task': 'arguswatch.scheduler',
-        'schedule': timedelta(seconds=5),
-        'args': [],
-    },
-})
-
-@app.task
-def add(x, y):
-    return x + y
+    #CELERYBEAT_SCHEDULE = {
+    #}
+)
 
 from .tasks.checker import ArgusChecker
 checker = ArgusChecker()
-
-from .tasks.scheduler import ArgusScheduler
-scheduler = ArgusScheduler()
-
 
 if __name__ == '__main__':
     app.start()

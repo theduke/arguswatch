@@ -10,6 +10,8 @@ django-taggit>=0.12
 django-polymorphic>=0.5
 django-mptt>=0.6
 djangorestframework>=2.3
+django-filter>=0.7
+django-sekizai>=0.7
 
 Installed apps:
 
@@ -18,6 +20,8 @@ polymorphic
 django.contrib.contenttypes
 mptt
 rest_framework
+django_filters
+sekizai
 
 Service Plugin dependencies:
 - SqlQuery: PyMySQL

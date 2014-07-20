@@ -1,0 +1,38 @@
+{% load sekizai_tags %}
+
+{% addtoblock "js" %}
+<script type="text/javascript">
+    $(function() {
+        var body = $('#service-filter .panel-body');
+        var label = $('#service-filter .panel-heading .label');
+
+        $('#service-filter .panel-heading').click(function() {
+            if (body.hasClass('shown')) {
+                body.slideUp().removeClass('shown');
+                label.html('Show');
+            }
+            else {
+                body.slideDown().addClass('shown');
+                label.html('Hide');
+            }
+        });
+    });
+</script>
+{% endaddtoblock %}
+
+<div class="filter" id="service-filter">
+    <div class="panel panel-info">
+        <div class="panel-heading" style="cursor: pointer;">
+            Filter
+            <span class="label label-primary">Show</span>
+        </div>
+        <div class="panel-body" style="display: none;">
+            <div class="filter-form">
+                 <form action="" method="get">
+                    {{ filter.form.as_p }}
+                    <input type="submit" />
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
