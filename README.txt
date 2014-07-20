@@ -6,12 +6,7 @@ Requirements
 
 PyPi packages:
 
-django-taggit>=0.12
-django-polymorphic>=0.5
-django-mptt>=0.6
-djangorestframework>=2.3
-django-filter>=0.7
-django-sekizai>=0.7
+See requirements.txt.
 
 Installed apps:
 
@@ -25,8 +20,6 @@ sekizai
 
 Service Plugin dependencies:
 - SqlQuery: PyMySQL
-
-
 
 Resources
 ---------
