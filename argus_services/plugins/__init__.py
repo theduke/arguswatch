@@ -7,6 +7,13 @@ class PluginImplementationError(Exception):
     pass
 
 
+class PluginConfiguratinError(Exception):
+    """
+    Thrown when a plugin is wrongly configured.
+    """
+
+    pass
+
 class ServiceIsDownException(Exception):
     """
     Thrown when a plugin check concludes that the service is down.
