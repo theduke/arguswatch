@@ -193,6 +193,15 @@ class Service(models.Model):
         verbose_name = _('Service')
         verbose_name_plural = _('Services')
 
+        permissions = (
+            ("view_service", "Can view service"),
+            ("add_service", "Can add service"),
+            ("change_service", "Can change service"),
+            ("delete_service", "Can delete service"),
+            ("run_service_check", "Can run service check"),
+            ("issue_service_check", "Can issue service check"),
+        )
+
     def __str__(self):
         return self.name
 
