@@ -1,4 +1,6 @@
 import datetime
+import logging
+from io import StringIO
 
 from django.db import models
 from django.utils.translation import ugettext as _
@@ -248,8 +250,35 @@ class Service(models.Model):
         result_data = None
 
         if run_locally:
-            result = checker.apply((self.plugin, self.plugin_config.get_settings()))
-            result_data = result.get()
+            # Build up a string logger to be able to return the log results.
+            logger = logging.getLogger('django.argus.celery')
+            logger.setLevel(logging.DEBUG)
+            # Handler.
+            stream = StringIO()
+            handler = logging.StreamHandler(stream)
+            handler.setLevel(logging.DEBUG)
+            # Formatter.
+            formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+            handler.setFormatter(formatter)
+            
+            for handler in logger.handlers:
+                logger.removeHandler(handler)
+            logger.addHandler(handler)
+
+            result = checker.apply((self.plugin, self.plugin_config.get_settings()), {'logger': logger})
+
+            status, msg = result.get()
+            # Flush logging handler to ensure all logs are written to streamIO stream.
+            handler.flush()
+
+            result_data = {
+                'status': status,
+                'message': msg,
+                'logs': stream.getvalue(),
+            }
+
+            stream.close()
+
         else:
             result = checker.delay(self.plugin, self.plugin_config.get_settings()) 
             self.celery_task_id = result.id

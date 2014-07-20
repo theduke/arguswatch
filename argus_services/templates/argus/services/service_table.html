@@ -4,6 +4,9 @@
     <th>Name</th>
     <th>Status</th>
     <th>Last Check</th>
+    {% if can_control %}
+    <th>Control</th> 
+    {% endif %}
     {% if can_edit %}
     <th>Actions</th>
     {% endif %}
@@ -17,6 +20,13 @@
     </td>
     <td class="status">{{ state }}</td>
     <td class="last_check">{% if item.last_checked %}{{ item.last_checked|date:"d.m.Y H:i:s" }}{% else %}NEVER{% endif %}</td>
+    {% if can_control %}
+    <td class="control">
+      <div class="btn-group">
+        <a href="{% url "argus_service_run" pk=item.id %}" class="btn btn-sm btn-warning">Run Check</a>
+      </div>
+    </td>
+    {% endif %}
     {% if can_edit %}
     <td class="actions">
       {% if not item.plugin_config %}

@@ -101,7 +101,7 @@ class ServicePlugin(metaclass=PluginManager):
         self.logger = None
 
     def set_logger(self, logger):
-        self.looger = logger
+        self.logger = logger
 
     def get_logger(self):
         if not self.logger:

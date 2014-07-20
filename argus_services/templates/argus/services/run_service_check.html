@@ -1,0 +1,20 @@
+{% extends "argus/base.html" %}
+{% load argus_tags %}
+
+{% block content %}
+<div class="actions">
+    <a href="{% url "argus_service_detail" pk=service.id %}" class="btn btn-primary">Go to service</a>
+</div>
+<h2>Status</h2>
+
+
+<p class="alert alert-{% get_state_class status %}">Service is <strong>{{ status }}.</strong></p>
+
+<h2>Message</h2>
+
+<p>{{ message|default:"No message" }}</p>
+
+<h3>Logs</h3>
+
+<pre>{{ log }}</pre>
+{% endblock content %}

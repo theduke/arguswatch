@@ -63,6 +63,8 @@ class ServiceListView(ListView):
         'create_label': 'New Service',
         'update_uri': 'argus_service_update',
         'delete_uri': 'argus_service_delete',
+        'can_control': True,
+        'can_edit': True,
     }
 
 
@@ -77,6 +79,8 @@ def services_list_grouped(request, slug=None):
         'head_title': 'Services by Group',
         'page_title': 'Services by Group',
         'groups': groups,
+        'can_control': True,
+        'can_edit': True,
     })
 
 
@@ -199,3 +203,22 @@ def service_api_passive_check(request, pk=None, slug=None):
     service.issue_passive_check(data)
 
     return HttpResponse("OK")
+
+
+def run_service_check(request, pk):
+    """
+    Run a service check locally (in the webserver process),
+    and display the result.
+    """
+
+    service = get_object_or_404(Service, id=pk)
+    result = service.issue_check(run_locally=True)
+
+    return render(request, 'argus/services/run_service_check.html', {
+        'page_title': 'Check of Service ' + str(service),
+        'head_title': 'Check of Service ' + str(service),
+        'status': result['status'],
+        'message': result['message'],
+        'log': result['logs'],
+        'service': service,
+    })

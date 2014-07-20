@@ -18,7 +18,7 @@ class ArgusChecker(Task):
         pass
 
 
-    def run(self, plugin_cls_name, settings):
+    def run(self, plugin_cls_name, settings, logger=None):
         """
         Just load the right plugin class, and then 
         execute the check.
@@ -28,7 +28,7 @@ class ArgusChecker(Task):
         """
 
         plugin = get_cls_by_name(plugin_cls_name)()
-        plugin.set_logger(get_task_logger('django'))
+        plugin.set_logger(logger or get_task_logger('django'))
 
         try:
             plugin.run_check(settings)
