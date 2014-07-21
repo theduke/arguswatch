@@ -56,9 +56,9 @@ setup(
     # requirements files see:
     # https://packaging.python.org/en/latest/technical.html#install-requires-vs-requirements-files
     install_requires=[
+	# Django + django contrib apps.
 	'Django>=1.6,<1.7',
 	'South>=1',
-	'celery>=3.1',
 	'django-baseline>=0.2.2',
 	'django-crispy-forms>=1.4',
 	'django-filter>=0.7',
@@ -68,7 +68,17 @@ setup(
 	'django-taggit>=0.12',
 	'djangorestframework>=2.3',
 	'pytz>=2014.4',
+
+	# Celery task queye.
+	'celery>=3.1',
+	
+	# Native python mysql.
+	# Needed by sqlquery servyice plugin.
 	'PyMySQL>=0.6',
+	
+	# SSH library for natvie python ssh.
+	# Needed by ssh service plugin.
+	'paramiko>=1.14',
     ],
 
     include_package_data=True,
