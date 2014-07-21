@@ -1,5 +1,8 @@
+from io import StringIO
+
 from django.db import models
 from django.utils.translation import ugettext as _
+from django import forms
 
 from django_baseline.forms import CrispyModelForm
 
@@ -18,13 +21,14 @@ class SSHPluginConfig(ServicePluginConfiguration):
         (AUTH_METHOD_PASSWORD, 'Password'),
         (AUTH_METHOD_PRIVATE_KEY, 'Private Key'),
     )
-    auth_method = models.CharField(max_length=50, blank=True,
+    auth_method = models.CharField(max_length=50,
         choices=AUTH_METHOD_CHOICES, verbose_name="Authentication method.")
 
     username = models.CharField(max_length=255, blank=True, 
         help_text="Username to authenticate with.")
     password = models.CharField(max_length=255, blank=True,
         help_text="Password to authenticate with.")
+
     private_key = models.TextField(blank=True)
 
     timeout = models.PositiveSmallIntegerField(default=30, 
@@ -46,7 +50,6 @@ class SSHPluginConfig(ServicePluginConfiguration):
         verbose_name = _('SSHPluginConfig')
         verbose_name_plural = _('SSHPluginConfigs')
         app_label = "argus_services"
- 
 
 
 class SSHPluginForm(CrispyModelForm):
@@ -54,9 +57,22 @@ class SSHPluginForm(CrispyModelForm):
         model = SSHPluginConfig
         fields = [
             'host', 'port',
-            'auth_method', 'username', 'password', 'private_key',
+            'auth_method', 'username', 'password', 
+            'private_key',
             'timeout',
         ]
+
+    def clean(self):
+        data = super(SSHPluginForm, self).clean()
+
+        if data['auth_method'] == SSHPluginConfig.AUTH_METHOD_PASSWORD:
+            if not (data['username'] and data['password']):
+                raise forms.ValidationError("For PASSWORD authentiaction, username and password are required.")
+        elif data['auth_method'] == SSHPluginConfig.AUTH_METHOD_PRIVATE_KEY:
+            if not (data['username'] and data['private_key']):
+                raise forms.ValidationError("For private key authentication, username and private key are required.")
+
+        return data
 
 
 class SSHService(ServicePlugin):
@@ -65,6 +81,14 @@ class SSHService(ServicePlugin):
     is_passive = False
     config_class = SSHPluginConfig
     form_class = SSHPluginForm
+
+
+    def build_pkey(self, private):
+        from paramiko import RSAKey
+
+        keyfile = StringIO(private)
+        key = mykey = RSAKey.from_private_key(keyfile)
+        return key
 
     def get_client(self, settings):
         from paramiko import client
@@ -78,12 +102,16 @@ class SSHService(ServicePlugin):
         port = settings['port']
         method = settings['auth_method']
 
-        args = {'port': port}
+        args = {
+            'port': port,
+            'timeout': settings['timeout'],
+        }
+
         if method == SSHPluginConfig.AUTH_METHOD_PASSWORD:
             args['username'] = settings['username']
             args['password'] = settings['password']
         elif method == SSHPluginConfig.AUTH_METHOD_PRIVATE_KEY:
-            args['pkey'] = settings['private_key']
+            args['pkey'] = self.build_pkey(settings['private_key'].strip())
         else:
             raise PluginConfiguratinError("Unknown authentication method: " + method)
 
@@ -103,3 +131,4 @@ class SSHService(ServicePlugin):
     def run_check(self, settings):
         log = self.get_logger()
         con = self.get_client(settings)
+        con.close()
