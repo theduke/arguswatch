@@ -73,6 +73,19 @@ class SMTPPluginForm(CrispyModelForm):
         ]
 
 
+    def clean(self):
+        data = super(SMTPPluginForm, self).clean()
+
+        if data['check_authentication'] and not data['auth_method']:
+            raise forms.ValidationError("Need to select authentication method if auth check is enabled")
+        if data['auth_method'] == SMTPPluginConfig.AUTH_METHOD_PLAIN:
+            if not (data['username'] and data['password']):
+                raise forms.ValidationError("For PLAIN authentiaction, username and password are required.")
+
+        return data
+
+
+
 class SMTPService(ServicePlugin):
     name = "SMTP"
     description = "Check an SMTP email server"
