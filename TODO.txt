@@ -1,5 +1,6 @@
 * Toggling of groups in service group display.
 * Use django-selectize for service editing (groups).
+* Fix ssh service plugin private key auth.
 
 Implement service plugins:
 
