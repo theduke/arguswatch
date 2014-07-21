@@ -1,3 +1,6 @@
+* Toggling of groups in service group display.
+* Use django-selectize for service editing (groups).
+
 Implement service plugins:
 
 check_apt
