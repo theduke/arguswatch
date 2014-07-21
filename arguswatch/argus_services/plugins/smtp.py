@@ -1,5 +1,10 @@
+import smtplib
+import socket
+import ssl
+
 from django.db import models
 from django.utils.translation import ugettext as _
+from django import forms
 
 from django_baseline.forms import CrispyModelForm
 
@@ -9,8 +14,8 @@ from ..models import ServicePluginConfiguration
 
 class SMTPPluginConfig(ServicePluginConfiguration):
     host = models.CharField(max_length=255, help_text="Server host.")
-    port = models.SmallPositiveIntegerField(default=110,
-        help_text="Server port. Default is 110 for non SSL, 995 for SSL.")
+    port = models.PositiveSmallIntegerField(default=25,
+        help_text="Server port. Default is 25 for non SSL, 465 for SSL.")
 
     METHOD_UNENCRYPTED = 'unencrypted'
     METHOD_STARTTLS = 'starttls'
@@ -28,7 +33,6 @@ class SMTPPluginConfig(ServicePluginConfiguration):
 
     AUTH_METHOD_PLAIN = 'plain'
     AUTH_METHOD_CHOICES = (
-        ('', ''),
         (AUTH_METHOD_PLAIN, 'PLAIN'),
     )
     auth_method = models.CharField(max_length=50, blank=True,
@@ -38,7 +42,7 @@ class SMTPPluginConfig(ServicePluginConfiguration):
     password = models.CharField(max_length=255, blank=True,
         help_text="Password to authenticate with.")
 
-    timeout = models.SmallPositiveIntegerField(default=30, 
+    timeout = models.PositiveSmallIntegerField(default=30, 
         help_text="Time in seconds the server is allowed to take to respond")
 
     def get_settings(self):
@@ -53,7 +57,6 @@ class SMTPPluginConfig(ServicePluginConfiguration):
             'timeout': self.timeout,
         }
 
-
     class Meta:
         verbose_name = _('SMTPPluginConfig')
         verbose_name_plural = _('SMTPPluginConfigs')
@@ -66,7 +69,7 @@ class SMTPPluginForm(CrispyModelForm):
         fields = [
             'method',
             'host', 'port',
-            'check_authentication', 'username', 'password'
+            'check_authentication', 'auth_method', 'username', 'password',
         ]
 
 
@@ -84,6 +87,7 @@ class SMTPService(ServicePlugin):
         method = settings['method']
         host = settings['host']
         port = settings['port']
+        timeout = settings['timeout']
 
         try: 
             if method == SMTPPluginConfig.METHOD_UNENCRYPTED:
@@ -111,10 +115,6 @@ class SMTPService(ServicePlugin):
     def run_check(self, settings):
         log = self.get_logger()
 
-        import SMTPlib
-        import socket
-        import ssl
-
         con = self.get_connection(settings)
 
         if settings['check_authentication']:
@@ -126,6 +126,9 @@ class SMTPService(ServicePlugin):
                 except smtplib.SMTPHeloError as e:
                     raise ServiceIsDownException("Server HELO error: " + str(e))
                 except smtplib.SMTPAuthenticationError as e:
+                    con.quit()
                     raise ServiceIsDownException("Authentication error: " + str(e))
             else:
                 raise PluginConfiguratinError('Unknown auth method: ' + auth_method)
+
+        con.quit()

@@ -64,6 +64,13 @@ from .plugins.port import PortPluginConfig
 from .plugins.noop import NoOpPluginConfig
 from .plugins.sql_query import SQLQueryPluginConfig
 
+from .plugins.smtp import SMTPPluginConfig
+from .plugins.pop import POPPluginConfig
+from .plugins.imap import IMAPPluginConfig
+
+from .plugins.ssh import SSHPluginConfig
+from .plugins.ssh_cmd import SSHCmdPluginConfig
+
 
 class ServiceGroup(MPTTModel):
     name = models.CharField(max_length=100, unique=True)

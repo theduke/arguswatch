@@ -1,5 +1,10 @@
+import imaplib
+import socket
+import ssl
+
 from django.db import models
 from django.utils.translation import ugettext as _
+from django import forms
 
 from django_baseline.forms import CrispyModelForm
 
@@ -20,14 +25,13 @@ class IMAPPluginConfig(ServicePluginConfiguration):
         help_text="Connection method")
 
     host = models.CharField(max_length=255, help_text="Server host.")
-    port = models.SmallPositiveIntegerField(default=143,
+    port = models.PositiveSmallIntegerField(default=143,
         help_text="Server port. Default is 143 for non SSL, 993 for SSL.")
 
     check_authentication = models.BooleanField(default=False,
         help_text="Check authentication with specified username and password.")
     AUTH_METHOD_PLAIN = 'plain'
     AUTH_METHOD_CHOICES = (
-        ('', ''),
         (AUTH_METHOD_PLAIN, 'PLAIN'),
     )
     auth_method = models.CharField(max_length=50, blank=True,
@@ -62,8 +66,19 @@ class IMAPPluginForm(CrispyModelForm):
         fields = [
             'method',
             'host', 'port',
-            'check_authentication', 'username', 'password'
+            'check_authentication', 'auth_method', 'username', 'password'
         ]
+
+    def clean(self):
+        data = super(IMAPPluginForm, self).clean()
+
+        if data['check_authentication'] and not data['auth_method']:
+            raise forms.ValidationError("Need to select authentication method if auth check is enabled")
+        if data['auth_method'] == IMAPPluginConfig.AUTH_METHOD_PLAIN:
+            if not (data['username'] and data['password']):
+                raise forms.ValidationError("For PLAIN authentiaction, username and password are required.")
+
+        return data
 
 
 class IMAPService(ServicePlugin):
@@ -72,7 +87,6 @@ class IMAPService(ServicePlugin):
     is_passive = False
     config_class = IMAPPluginConfig
     form_class = IMAPPluginForm
-
 
     def get_connection(self, settings):
         con = None
@@ -106,10 +120,6 @@ class IMAPService(ServicePlugin):
     def run_check(self, settings):
         log = self.get_logger()
 
-        import imaplib
-        import socket
-        import ssl
-
         con = self.get_connection(settings)
         
         # Handle authentication.
@@ -120,6 +130,10 @@ class IMAPService(ServicePlugin):
                 try:
                     con.login(settings['username'], settings['password'])
                 except imaplib.IMAP4.error as e:
+                    con.logout()
                     raise ServiceIsDownException("Authentication failed: " + str(e))
             else:
                 raise PluginConfiguratinError('Unknown auth method: ' + auth_method)
+
+
+        con.logout()

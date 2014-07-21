@@ -6,7 +6,7 @@ from django_baseline.forms import CrispyModelForm
 from ..models import ServicePluginConfiguration
 
 from . import ServicePlugin, ServiceIsDownException, PluginCheckError, PluginConfiguratinError
-from .ssl import SSHPluginConfig, SSHService
+from .ssh import SSHPluginConfig, SSHService
 
 
 class SSHCmdPluginConfig(SSHPluginConfig):
@@ -24,7 +24,7 @@ class SSHCmdPluginConfig(SSHPluginConfig):
  
 
 
-class SSHCmdPluginConfig(CrispyModelForm):
+class SSHCmdPluginForm(CrispyModelForm):
     class Meta:
         model = SSHCmdPluginConfig
         fields = [
@@ -46,4 +46,4 @@ class SSHCmdService(SSHService):
         client = self.get_client(settings)
 
         stdin, stdout, stderr = client.exec_command(settings['command'])
-        print stdout.channel.recv_exit_status()    # status is 0
+        print(stdout.channel.recv_exit_status())

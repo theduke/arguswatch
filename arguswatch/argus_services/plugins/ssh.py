@@ -9,7 +9,7 @@ from ..models import ServicePluginConfiguration
 
 class SSHPluginConfig(ServicePluginConfiguration):
     host = models.CharField(max_length=255, help_text="Server host.")
-    port = models.SmallPositiveIntegerField(default=22,
+    port = models.PositiveSmallIntegerField(default=22,
         help_text="Server port. Default is 22.")
 
     AUTH_METHOD_PASSWORD = 'password'
@@ -27,7 +27,7 @@ class SSHPluginConfig(ServicePluginConfiguration):
         help_text="Password to authenticate with.")
     private_key = models.TextField(blank=True)
 
-    timeout = models.SmallPositiveIntegerField(default=30, 
+    timeout = models.PositiveSmallIntegerField(default=30, 
         help_text="Time in seconds the server is allowed to take to respond")
 
     def get_settings(self):
