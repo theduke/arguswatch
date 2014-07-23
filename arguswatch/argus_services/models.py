@@ -247,8 +247,6 @@ class Service(models.Model):
         return logger
 
     def get_check_logger_logs(self, logger):
-        #import ipdb; ipdb.set_trace()
-
         handler = None
 
         for h in logger.handlers:
@@ -319,7 +317,6 @@ class Service(models.Model):
 
         # Build an Event instance.
         event = self.determine_event(state, message)
-        #import ipdb; ipdb.set_trace()
         log.debug("Determined event for service {}: {}".format(self, event.event))
 
         # Update last_checked and celery task id.
