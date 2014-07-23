@@ -94,13 +94,6 @@ class NotificationPlugin(metaclass=PluginManager):
         last_state_change = service_data['last_state_change'].strftime('%d.%m.%Y %H:%M') if service_data['last_state_change'] else 'NEVER'
         last_ok = service_data['last_ok'].strftime('%d.%m.%Y %H:%M') if service_data['last_ok'] else 'NEVER'
 
-
-    EVENT_GOES_UNKNOWN_PROVISIONAL = 'goes_unknown_provisional'
-    EVENT_STAYS_UNKNOWN_PROVISIONAL = 'stays_unknown_provisional'
-    EVENT_GOES_UNKNOWN = 'goes_unknown'
-    EVENT_STAYS_UNKNOWN = 'stays_unknown'
-
-
         if event == Event.EVENT_STAYS_OK:
             subject = "Service {s} is UP".format(s=name)
             msg = "Service {s} is currently up, and has been up since {c}".format(
