@@ -5,7 +5,7 @@ from .argus_services.models import Service
 
 def dashboard(request):
     services_critical = Service.objects.filter(
-        state__in=(Service.STATE_DOWN, Service.STATE_UNKNOWN)
+        state__in=(Service.STATE_DOWN, Service.STATE_UNKNOWN),
         state_provisional=False
     ).all()
 

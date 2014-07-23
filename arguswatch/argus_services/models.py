@@ -464,7 +464,7 @@ class Service(models.Model):
         )
 
         instance = Event(
-            old_state=state, old_state_provisional=was_provisional
+            old_state=state, old_state_provisional=was_provisional,
             new_state=state, new_state_provisional=is_provisional,
             event=event,
             message=message or '',

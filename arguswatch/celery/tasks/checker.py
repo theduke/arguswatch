@@ -3,7 +3,7 @@ from celery.registry import tasks
 from celery.utils.log import get_task_logger
 
 from arguswatch.argus_services.models import Service
-from arguswatch.argus_services.plugins import PluginImplementationError, PluginConfigurationError, ServiceCheckFailed ServiceIsDown, ServiceHasWarning
+from arguswatch.argus_services.plugins import PluginImplementationError, PluginConfigurationError, ServiceCheckFailed, ServiceIsDown, ServiceHasWarning
 from arguswatch.utils.django import get_cls_by_name
 
 
@@ -37,7 +37,7 @@ class ArgusChecker(Task):
             return (Service.STATE_UNKNOWN, e.message)
         except PluginConfigurationError as e:
             return (Service.STATE_UNKNOWN, "Plugin {} is misconfigured: {}".format(
-                plugin_cls_name, e.message)
+                plugin_cls_name, e.message))
         except ServiceCheckFailed as e:
             return (Service.STATE_UNKNOWN, "Service check failed: " + e.reason)
         except ServiceIsDown as e:
