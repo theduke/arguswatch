@@ -19,7 +19,8 @@ class ServiceForm(CrispyModelForm):
 
     class Meta:
         model = Service
-        fields = ['enabled', 'name', 'description', 'plugin', 'service_config',  'parent', 'groups', 'tags',]
+        fields = ['enabled', 'name', 'description', 'plugin', 
+          'service_config',  'parent', 'groups', 'tags',]
 
 
     def __init__(self, *args, **kwargs):

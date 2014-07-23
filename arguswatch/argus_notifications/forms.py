@@ -12,13 +12,13 @@ class NotificationForm(CrispyModelForm):
         model = Notification
         fields = ['name', 'description', 'plugin',
             'on_remains_up', 
-            'on_critical_soft', 'on_warning_soft', 'on_recovery_soft',
-            'on_critical_hard', 'on_warning_hard', 'on_recovery_hard',
-
-            'interval', 'interval_remains_up', 'interval_warning_hard',
-            'interval_critical_hard', 'interval_recovery_hard',
+            'interval_state_change_provisional',
+            'interval_state_stays_provisional',
+            'interval_state_change', 
+            'interval_state_stays',
+            'interval_change_ok',
+            'interval_hard',
         ]
-
 
     def __init__(self, *args, **kwargs):
         super(NotificationForm, self).__init__(*args, **kwargs)

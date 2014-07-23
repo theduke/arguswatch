@@ -11,13 +11,17 @@ class ServiceConfigurationForm(CrispyModelForm):
         model = ServiceConfiguration
         fields = [
             'name', 'description',
-            'check_interval', 
-            'retry_interval_soft', 'retry_interval_hard',
+            
+            'check_interval_ok',
+            'check_interval_provisional',
+            'check_interval_warning',
+            'check_interval_down',
+            'check_interval_unknown' 
+
             'max_retries_soft',
 
             'api_can_trigger_events',
         ]
-
 
     def __init__(self, *args, **kwargs):
         super(ServiceConfigurationForm, self).__init__(*args, **kwargs)
