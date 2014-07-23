@@ -19,15 +19,15 @@ class ServiceConfiguration(models.Model):
     description = models.TextField(blank=True)
 
     check_interval_ok = models.PositiveIntegerField(default=60*15, 
-        help_text="Check interval if service is OK (in seconds).")
+        help_text="Check interval if service is OK in seconds.")
     check_interval_provisional = models.PositiveIntegerField(default=60*5, 
-        help_text='Check interval for provisional states (down, unknown).')
+        help_text='Check interval for provisional states (down, unknown) in seconds.')
     check_interval_warning = models.PositiveIntegerField(default=60*10, 
-        help_text='Check interval if service state is WARNING (in seconds).')
+        help_text='Check interval if service state is WARNING in seconds.')
     check_interval_down = models.PositiveIntegerField(default=60*10, 
-        help_text='Check interval if service is DOWN (in seconds).')
+        help_text='Check interval if service is DOWN in seconds.')
     check_interval_unknown = models.PositiveIntegerField(default=60*10, 
-        help_text='Check interval if service is UNKNOWN (in seconds).')
+        help_text='Check interval if service is UNKNOWN in seconds.')
     max_retries = models.PositiveSmallIntegerField(default=3, 
         help_text='Number of retries before a provisional state is locked in (applies to down and unknown)')
 
