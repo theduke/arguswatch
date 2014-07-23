@@ -5,7 +5,7 @@ from django_baseline.forms import CrispyModelForm
 
 from ..models import ServicePluginConfiguration
 
-from . import ServicePlugin, ServiceIsDownException, PluginCheckError, PluginConfiguratinError
+from . import ServicePlugin, ServiceIsDown, PluginCheckError, PluginConfigurationError
 from .ssh import SSHPluginConfig, SSHService
 
 

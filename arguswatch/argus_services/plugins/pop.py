@@ -8,7 +8,7 @@ from django import forms
 
 from django_baseline.forms import CrispyModelForm
 
-from . import ServicePlugin, ServiceIsDownException, PluginCheckError, PluginConfiguratinError
+from . import ServicePlugin, PluginConfigurationError, ServiceIsDown, ServiceHasWarning, ServiceCheckFailed
 from ..models import ServicePluginConfiguration
 
 
@@ -104,20 +104,20 @@ class POPService(ServicePlugin):
             elif method == POPPluginConfig.METHOD_STARTTLS:
                 con = poplib.POP3(host, port, timeout=timeout)
                 if not hasattr(con, 'stls'):
-                    raise Exception("poplib connection does not have stls capability. Python 3.5 required.")
+                    raise ServiceCheckFailed("poplib connection does not have stls capability. Python 3.5 required.")
 
                 con.stls()
             elif method == POPPluginConfig.METHOD_SSL:
                 con = poplib.POP3_SSL(host, port, timeout=timeout)
             else:
-                raise PluginConfiguratinError("Unknown connection method: " + method)
+                raise PluginConfigurationError("Unknown connection method: " + method)
         except socket.gaierror as e:
-            raise ServiceIsDownException("Could not resolve hostname {h}".format(
+            raise ServiceIsDown("Could not resolve hostname {h}".format(
                 host))
         except ssl.SSLError as e:
-            raise ServiceIsDownException("SSL error: " + str(e))
+            raise ServiceIsDown("SSL error: " + str(e))
         except socket.error as e:
-            raise ServiceIsDownException("Socket error: " + str(e))
+            raise ServiceIsDown("Socket error: " + str(e))
 
         return con
 
@@ -135,8 +135,8 @@ class POPService(ServicePlugin):
                     con.pass_(settings['password']) 
                 except poplib.error_proto as e:
                     con.quit()
-                    raise ServiceIsDownException("Authentication error: " + str(e))
+                    raise ServiceIsDown("Authentication error: " + str(e))
             else:
-                raise PluginConfiguratinError('Unknown auth method: ' + auth_method)
+                raise PluginConfigurationError('Unknown auth method: ' + auth_method)
         
         con.quit()

@@ -6,7 +6,7 @@ from django import forms
 
 from django_baseline.forms import CrispyModelForm
 
-from . import ServicePlugin, ServiceIsDownException, PluginCheckError, PluginConfiguratinError
+from . import ServicePlugin, ServiceIsDown, PluginCheckError, PluginConfigurationError
 from ..models import ServicePluginConfiguration
 
 
@@ -113,18 +113,18 @@ class SSHService(ServicePlugin):
         elif method == SSHPluginConfig.AUTH_METHOD_PRIVATE_KEY:
             args['pkey'] = self.build_pkey(settings['private_key'].strip())
         else:
-            raise PluginConfiguratinError("Unknown authentication method: " + method)
+            raise PluginConfigurationError("Unknown authentication method: " + method)
 
         try:
             c.connect(host, **args)
         except ssh_exception.AuthenticationException as e:
-            raise ServiceIsDownException("Authentication failed: " + str(e))
+            raise ServiceIsDown("Authentication failed: " + str(e))
         except ssh_exception.BadAuthenticationType as e:
-            raise ServiceIsDownException("Unsupported authentication type: " + str(e))
+            raise ServiceIsDown("Unsupported authentication type: " + str(e))
         except ssh_exception.ChannelException as e:
-            raise ServiceIsDownException("SSH channel open failed: " + str(e))
+            raise ServiceIsDown("SSH channel open failed: " + str(e))
         except ssh_exception.SSHException as e:
-            raise ServiceIsDownException("SSH error: " + str(e))
+            raise ServiceIsDown("SSH error: " + str(e))
 
         return c
 

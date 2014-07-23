@@ -2,45 +2,60 @@
 
 import logging
 
+class ServiceException(Exception):
 
-class PluginImplementationError(Exception):
+    def __init__(self, message, *args, **kwargs):
+        self.message = message
+        super(ServiceException, self).__init__(info, *args, **kwargs)
+
+
+class PluginImplementationError(ServiceException):
+    """
+    Thrown if a plugin does not implement the required method.
+    """
+
     pass
 
 
-class PluginConfiguratinError(Exception):
+class PluginConfigurationError(ServiceException):
     """
     Thrown when a plugin is wrongly configured.
     """
 
     pass
 
-class ServiceIsDownException(Exception):
+
+class ServiceIsDown(ServiceException):
     """
-    Thrown when a plugin check concludes that the service is down.
+    Thrown if service is down.
     """
-    
-    def __init__(self, info, *args, **kwargs):
-        self.info = info
-        super(ServiceIsDownException, self).__init__(info, *args, **kwargs)
+
+    pass
 
 
-class PluginCheckError(Exception):
+class ServiceHasWarning(ServiceException):
+    """
+    Thrown if service has a warning.
+    """
+
+    pass
+
+
+class ServiceCheckFailed(ServiceException):
     """
     Thrown when a plugin check fails in some EXPECTED way.
     For example, if a website should be checked, but the checking host
     does not have an active internet connection.
 
     If the run_check method throws any other exception apart from 
-    PluginCheckError and ServiceIsDownException, special reporting and error
-    handling will commence.
+    PluginCheckError, ServiceIsDown, ServiceHasWarning special reporting and 
+    error handling will commence.
 
     So plugins should do their best to handle known errors, and throw
     this exception with a good explenation.
     """
 
-    def __init__(self, reason, *args, **kwargs):
-        self.reason = reason
-        super(PluginCheckError, self).__init__(reason, *args, **kwargs)
+    pass
 
 
 class PluginManager(type):
@@ -112,7 +127,7 @@ class ServicePlugin(metaclass=PluginManager):
     def on_data_received(self, data):
         """
         Handle the data sent by an external check, and return a tuple of
-        (Service.EVENT_*, msg) with the proper event type and a message.
+        (Event.EVENT_*, msg) with the proper event type and a message.
         """
 
         msg = "Plugin {} does not implement method on_data_received()".format(
@@ -124,7 +139,7 @@ class ServicePlugin(metaclass=PluginManager):
         """
         Perfom the actual plugin check.
         MUST throw PluginCheckError when the check fails in some way,
-        and ServiceIsDownException if the service is determined to be down.
+        and ServiceIsDown if the service is determined to be down.
         """
 
         msg = "Plugin {} does not implement method run_check()".format(

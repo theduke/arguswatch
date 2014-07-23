@@ -7,7 +7,7 @@ from django.utils.translation import ugettext as _
 
 from django_baseline.forms import CrispyModelForm
 
-from . import ServicePlugin, ServiceIsDownException, PluginCheckError, PluginConfiguratinError
+from . import ServicePlugin, ServiceIsDown, PluginCheckError, PluginConfigurationError
 from ..models import ServicePluginConfiguration
 
 
@@ -112,7 +112,7 @@ class SQLQueryService(ServicePlugin):
         try:
             con = self.get_connection(settings)
         except Exception as e:
-            raise ServiceIsDownException("Could not connect to database: " + str(e))
+            raise ServiceIsDown("Could not connect to database: " + str(e))
 
         query = self.get_query(settings)
         log.debug("Running query {q}".format(q=query))
@@ -121,7 +121,7 @@ class SQLQueryService(ServicePlugin):
         is_valid = self.validate_result(row_count, result, settings)
 
         if not is_valid:
-            raise ServiceIsDownException("Validation check failed")
+            raise ServiceIsDown("Validation check failed")
 
 
     def validate_result(self, row_count, result, settings):
@@ -148,9 +148,9 @@ class SQLQueryService(ServicePlugin):
                 num = int(spec[1:])
                 flag = row_count < num
             else:
-                raise PluginConfiguratinError("Could not parse validation spec: " + spec)
+                raise PluginConfigurationError("Could not parse validation spec: " + spec)
         else:
-            raise Exception("Unknown validation mode: " + settings['validation_mode'])
+            raise PluginConfigurationError("Unknown validation mode: " + settings['validation_mode'])
 
         return flag
 
@@ -174,7 +174,7 @@ class SQLQueryService(ServicePlugin):
             con = connect(**args)
             return con
         else:
-            raise Ecxeption("Unknown database type: " + settings['database_type'])
+            raise PluginConfigurationError("Unknown database type: " + settings['database_type'])
 
 
     def execute_query(self, db_type, con, query):
@@ -185,7 +185,7 @@ class SQLQueryService(ServicePlugin):
 
             return (cursor.rowcount, cursor.fetchall())
         else:
-            raise PluginConfiguratinError("Unknown database type: " + db_type)
+            raise PluginConfigurationError("Unknown database type: " + db_type)
 
 
     def get_query(self, settings):
@@ -218,7 +218,7 @@ class SQLQueryService(ServicePlugin):
         elif spec[0] == '-':
             plus = False
         else:
-            raise PluginConfiguratinError("Timedelta specification must start with + or -")
+            raise PluginConfigurationError("Timedelta specification must start with + or -")
         spec = spec[1:]
 
         parts = re.subn('([yMdhms])', r'\1 ', spec)[0].strip().split(' ')

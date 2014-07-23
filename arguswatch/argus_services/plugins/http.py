@@ -3,7 +3,7 @@ from django.utils.translation import ugettext as _
 
 from django_baseline.forms import CrispyModelForm
 
-from . import ServicePlugin, ServiceIsDownException, PluginCheckError
+from . import ServicePlugin, PluginConfigurationError, ServiceIsDown, ServiceHasWarning, ServiceCheckFailed
 from ..models import ServicePluginConfiguration
 
 
@@ -57,12 +57,12 @@ class HttpService(ServicePlugin):
         try:
             result = urllib.request.urlopen(settings['url'], timeout=settings['timeout'])
         except urllib.request.URLError as e:
-            raise ServiceIsDownException('Unreachable')
+            raise ServiceIsDown('Unreachable')
 
         if settings['response_code'] != result.getcode():
-            raise ServiceIsDownException('Wrong HTTP Code: {} (expected: {}'.format(
+            raise ServiceIsDown('Wrong HTTP Code: {} (expected: {}'.format(
                 result.getcode(), settings['response_code']))
 
         if settings['response_text']:
             if settings['response_text'] != result.read().trim():
-                raise ServiceIsDownException('HTML Response body did not match')
+                raise ServiceIsDown('HTML Response body did not match')

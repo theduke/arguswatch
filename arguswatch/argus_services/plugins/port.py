@@ -3,7 +3,7 @@ from django.utils.translation import ugettext as _
 
 from django_baseline.forms import CrispyModelForm
 
-from . import ServicePlugin, ServiceIsDownException, PluginCheckError
+from . import ServicePlugin, ServiceIsDown, PluginCheckError
 from ..models import ServicePluginConfiguration
 
 
@@ -59,7 +59,7 @@ class PortService(ServicePlugin):
             sock.settimeout(timeout)
             result = sock.connect_ex((host, port))
         except socket.gaierror as e:
-            raise ServiceIsDownException('DNS Lookup for {} failed.'.format(host))
+            raise ServiceIsDown('DNS Lookup for {} failed.'.format(host))
 
         if result != 0:
-            raise ServiceIsDownException('Unreachable')
+            raise ServiceIsDown('Unreachable')

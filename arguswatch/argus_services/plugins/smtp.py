@@ -8,7 +8,7 @@ from django import forms
 
 from django_baseline.forms import CrispyModelForm
 
-from . import ServicePlugin, ServiceIsDownException, PluginCheckError, PluginConfiguratinError
+from . import ServicePlugin, ServiceIsDown, PluginCheckError, PluginConfigurationError
 from ..models import ServicePluginConfiguration
 
 
@@ -111,16 +111,16 @@ class SMTPService(ServicePlugin):
             elif method == SMTPPluginConfig.METHOD_SSL:
                 con = smtplib.SMTP_SSL(host, port, timeout=timeout)
             else:
-                raise PluginConfiguratinError("Unknown connection method: " + method)
+                raise PluginConfigurationError("Unknown connection method: " + method)
         except socket.gaierror as e:
-            raise ServiceIsDownException("Could not resolve hostname {h}".format(
+            raise ServiceIsDown("Could not resolve hostname {h}".format(
                 host))
         except ssl.SSLError as e:
-            raise ServiceIsDownException("SSL error: " + str(e))
+            raise ServiceIsDown("SSL error: " + str(e))
         except socket.error as e:
-            raise ServiceIsDownException("Socket error: " + str(e))
+            raise ServiceIsDown("Socket error: " + str(e))
         except smtplib.SMTPConnectError as e:
-            raise ServiceIsDownException("SMTP connect error: " + str(e))
+            raise ServiceIsDown("SMTP connect error: " + str(e))
 
         return con
 
@@ -137,11 +137,11 @@ class SMTPService(ServicePlugin):
                 try:
                     con.login(settings['username'], settings['password'])
                 except smtplib.SMTPHeloError as e:
-                    raise ServiceIsDownException("Server HELO error: " + str(e))
+                    raise ServiceIsDown("Server HELO error: " + str(e))
                 except smtplib.SMTPAuthenticationError as e:
                     con.quit()
-                    raise ServiceIsDownException("Authentication error: " + str(e))
+                    raise ServiceIsDown("Authentication error: " + str(e))
             else:
-                raise PluginConfiguratinError('Unknown auth method: ' + auth_method)
+                raise PluginConfigurationError('Unknown auth method: ' + auth_method)
 
         con.quit()

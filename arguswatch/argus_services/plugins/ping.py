@@ -4,7 +4,7 @@ from django.utils.translation import ugettext as _
 from django_baseline.forms import CrispyModelForm
 from django import forms
 
-from . import ServicePlugin, ServiceIsDownException, PluginCheckError
+from . import ServicePlugin, ServiceIsDown, PluginCheckError
 from ..models import ServicePluginConfiguration
 
 
@@ -65,4 +65,4 @@ class PingService(ServicePlugin):
         code = subprocess.call(cmd.split(' '))
 
         if code != 0:
-            raise ServiceIsDownException('Could not ping {h} with cmd {cmd}'.format(h=host, cmd=cmd))
+            raise ServiceIsDown('Could not ping {h} with cmd {cmd}'.format(h=host, cmd=cmd))

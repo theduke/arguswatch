@@ -8,7 +8,7 @@ from django import forms
 
 from django_baseline.forms import CrispyModelForm
 
-from . import ServicePlugin, ServiceIsDownException, PluginCheckError, PluginConfiguratinError
+from . import ServicePlugin, PluginConfigurationError, ServiceIsDown, ServiceHasWarning, ServiceCheckFailed
 from ..models import ServicePluginConfiguration
 
 
@@ -104,16 +104,16 @@ class IMAPService(ServicePlugin):
             elif method == IMAPPluginConfig.METHOD_SSL:
                 con = imaplib.IMAP4_SSL(host, port)
             else:
-                raise PluginConfiguratinError("Unknown connection method: " + method)
+                raise PluginConfigurationError("Unknown connection method: " + method)
         except socket.gaierror as e:
-            raise ServiceIsDownException("Could not resolve hostname {h}".format(
+            raise ServiceIsDown("Could not resolve hostname {h}".format(
                 host))
         except ssl.SSLError as e:
-            raise ServiceIsDownException("SSL error: " + str(e))
+            raise ServiceIsDown("SSL error: " + str(e))
         except socket.error as e:
-            raise ServiceIsDownException("Socket error: " + str(e))
+            raise ServiceIsDown("Socket error: " + str(e))
         except imaplib.IMAP4.abort as e:
-            raise ServiceIsDownException("IMAP error: " + str(e))
+            raise ServiceIsDown("IMAP error: " + str(e))
 
         return con
 
@@ -131,9 +131,9 @@ class IMAPService(ServicePlugin):
                     con.login(settings['username'], settings['password'])
                 except imaplib.IMAP4.error as e:
                     con.logout()
-                    raise ServiceIsDownException("Authentication failed: " + str(e))
+                    raise ServiceIsDown("Authentication failed: " + str(e))
             else:
-                raise PluginConfiguratinError('Unknown auth method: ' + auth_method)
+                raise PluginConfigurationError('Unknown auth method: ' + auth_method)
 
 
         con.logout()
