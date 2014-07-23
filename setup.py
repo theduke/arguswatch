@@ -61,12 +61,14 @@ setup(
 	'South>=1',
 	'django-baseline>=0.2.2',
 	'django-crispy-forms>=1.4',
+    'django-selectize>=1.2',
 	'django-filter>=0.7',
 	'django-mptt>=0.6',
 	'django-polymorphic>=0.5.5',
 	'django-sekizai>=0.7',
 	'django-taggit>=0.12',
 	'djangorestframework>=2.3',
+
 	'pytz>=2014.4',
 
 	# Celery task queye.

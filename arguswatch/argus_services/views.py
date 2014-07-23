@@ -111,7 +111,14 @@ def services_list_grouped(request, slug=None):
 class ServiceCreateView(UserViewMixin, CreateView):
     model = Service
     form_class = ServiceForm
-    extra_context = {'head_title': 'Create Service'}
+    template_name = 'argus/generic_edit.html'
+
+    extra_context = {
+        'head_title': 'Create Service',
+        'page_title': 'Create Service',
+        'add_selectize': ['#id_groups'],
+        'flag': True,
+    }
 
     def get_success_url(self):
         return reverse('argus_service_configure', kwargs={'pk': self.object.id})
@@ -120,7 +127,11 @@ class ServiceCreateView(UserViewMixin, CreateView):
 class ServiceUpdateView(UpdateView):
     model = Service
     form_class = ServiceForm
-    extra_context = {'head_title': 'Update Service'}
+    extra_context = {
+        'head_title': 'Update Service',
+        'page_title': 'Update Service',
+        'add_selectize': ['#id_groups'],
+    }
 
     template_name = 'argus/services/service_update.html'
     success_url = reverse_lazy('argus_services')

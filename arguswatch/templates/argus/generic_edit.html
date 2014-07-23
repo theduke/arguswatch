@@ -1,0 +1,31 @@
+{% extends "argus/base.html" %}
+{% load helpers %}
+{% load static %}
+{% load sekizai_tags %}
+{% load crispy_forms_tags %}
+
+{% block content %}
+
+{% if add_selectize %}
+{% addtoblock "css" %}
+<link rel="stylesheet" href="{% static "selectize/css/selectize.bootstrap3.css" %}">
+{% endaddtoblock %}
+
+{% addtoblock "js" %}
+<script type="text/javascript" src="{% static "selectize/selectize.min.js" %}"></script>
+<script type="text/javascript">
+$(function() {
+    {% for sel in add_selectize %}
+    $("{{ sel }}").selectize();
+    {% endfor %}
+});
+</script>
+{% endaddtoblock %}
+{% endif %}
+
+{% block pre_form %}{% endblock %}
+{% block form %}
+  {% crispy form %}
+{% endblock %}
+{% block post_form %}{% endblock %}
+{% endblock %}
