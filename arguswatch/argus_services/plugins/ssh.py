@@ -6,7 +6,7 @@ from django import forms
 
 from django_baseline.forms import CrispyModelForm
 
-from . import ServicePlugin, ServiceIsDown, PluginCheckError, PluginConfigurationError
+from . import ServicePlugin, ServiceIsDown, ServiceCheckFailed, PluginConfigurationError
 from ..models import ServicePluginConfiguration
 
 

@@ -4,7 +4,7 @@ from django.utils.translation import ugettext as _
 from django_baseline.forms import CrispyModelForm
 from django import forms
 
-from . import ServicePlugin, ServiceIsDown, PluginCheckError
+from . import ServicePlugin, ServiceIsDown, ServiceCheckFailed
 from ..models import ServicePluginConfiguration
 
 

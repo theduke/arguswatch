@@ -31,7 +31,7 @@ class ServiceCheckFailed(ServiceException):
     does not have an active internet connection.
 
     If the run_check method throws any other exception apart from 
-    PluginCheckError, ServiceIsDown, ServiceHasWarning special reporting and 
+    ServiceCheckFailed, ServiceIsDown, ServiceHasWarning special reporting and 
     error handling will commence.
 
     So plugins should do their best to handle known errors, and throw
@@ -102,7 +102,6 @@ class ServicePlugin(metaclass=PluginManager):
     config_class = None
     form_class = None
 
-
     @classmethod
     def get_plugins(cls):
         return cls._plugins
@@ -138,7 +137,7 @@ class ServicePlugin(metaclass=PluginManager):
     def run_check(self, settings):
         """
         Perfom the actual plugin check.
-        MUST throw PluginCheckError when the check fails in some way,
+        MUST throw ServiceCheckFailed when the check fails in some way,
         and ServiceIsDown if the service is determined to be down.
         """
 

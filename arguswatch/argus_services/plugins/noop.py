@@ -3,7 +3,7 @@ from django.utils.translation import ugettext as _
 
 from django_baseline.forms import CrispyModelForm
 
-from . import ServicePlugin, ServiceIsDown, PluginCheckError
+from . import ServicePlugin, ServiceIsDown, ServiceCheckFailed
 from ..models import ServicePluginConfiguration
 
 

@@ -5,7 +5,7 @@ from django_baseline.forms import CrispyModelForm
 
 from ..models import ServicePluginConfiguration
 
-from . import ServicePlugin, ServiceIsDown, PluginCheckError, PluginConfigurationError
+from . import ServicePlugin, ServiceIsDown, ServiceCheckFailed, PluginConfigurationError
 from .ssh import SSHPluginConfig, SSHService
 
 
@@ -21,7 +21,6 @@ class SSHCmdPluginConfig(SSHPluginConfig):
         verbose_name = _('SSHCmdPluginConfig')
         verbose_name_plural = _('SSHCmdPluginConfigs')
         app_label = "argus_services"
- 
 
 
 class SSHCmdPluginForm(CrispyModelForm):
