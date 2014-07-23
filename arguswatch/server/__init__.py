@@ -10,7 +10,7 @@ from arguswatch.celery import checker
 class Server:
 
     def __init__(self, logger=None):
-        self.logger = logger or logging.getLogger('django.argus.server')
+        self.logger = logger or logging.getLogger('argus.server')
 
         # The time a task check is allowed to be completed.
         # If the check task takes longer than that, the check will be 
