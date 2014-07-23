@@ -15,6 +15,7 @@ class NotificationForm(CrispyModelForm):
             'interval_state_stays_provisional',
             'interval_state_change', 
             'interval_state_stays',
+            'interval_stays_ok',
             'interval_change_ok',
             'interval_hard',
         ]

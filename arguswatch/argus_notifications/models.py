@@ -46,7 +46,8 @@ class Notification(models.Model):
     interval_state_change_provisional = models.SmallIntegerField(default=-1)
     interval_state_stays_provisional = models.SmallIntegerField(default=-1)
     interval_state_change = models.SmallIntegerField(default=60)
-    interval_state_stays = models.SmallIntegerField(default=60*60*6)
+    interval_state_stays = models.SmallIntegerField(default=60*60*12)
+    interval_stays_ok = models.SmallIntegerField(default=-1)
     interval_change_ok = models.SmallIntegerField(default=0)
     
     interval_hard = models.PositiveSmallIntegerField(default=5)
@@ -60,20 +61,52 @@ class Notification(models.Model):
         event_stays = event.old_state == event.new_state
         provisional_stays = event.old_state_provisional == event.new_state_provisional
 
-         # OK interval overwrites defaults.
-        if event.new_state == Service.STATE_OK ^ event.old_state == Service.STATE_OK:
-            return 'change_ok'
+         # OK intervals overwrites defaults.
+        if event.old_state == Service.STATE_OK and event.new_state == Service.STATE_OK:
+            # stays_ok interval is responsible if state stays OK.
+            return 'interval_stays_ok'
+        elif event.new_state == Service.STATE_OK or event.old_state == Service.STATE_OK:
+            # State changed from OK or to OK.
+            return 'interval_change_ok'
 
         if event_stays and provisional_stays:
             if event.new_state_provisional:
-                return 'state_stays_provisional'
+                return 'interval_state_stays_provisional'
             else:
-                return 'state_stays'
+                return 'interval_state_stays'
         else:
             if event.new_state_provisional:
-                return 'state_change_provisional'
+                return 'interval_state_change_provisional'
             else:
-                return 'state_change'
+                return 'interval_state_change'
+
+    def get_interval_for_event(self, event):
+        """
+        Determine the interval in seconds to use for an event.
+        """
+
+        field = self.get_interval_for_event(event)
+        return getattr(self, field)
+
+    def get_last_sent_field_for_event(self, event):
+        """
+        Get the field responsible for the delta for a specific event.
+        """
+
+        # Reuse logic from interval field determination.
+        field = self.get_interval_field_for_event(event)
+
+        # For interval_stays_ok, the last_sent field is used.
+        # Otherwise, the customly named field is.
+        return field if field != 'interval_stays_ok' else 'last_sent'
+
+    def get_last_sent_for_event(self, event, history):
+        """
+        Get a DateTime for the last time a notification 
+        for a speicic event kind was sent.
+        """
+
+        return getattr(event, self.get_last_sent_field_for_event(event))
 
     def should_notify(self, service, event):
         """
@@ -87,12 +120,10 @@ class Notification(models.Model):
 
         now = timezone.now()
 
-        delta = None
+        delta = self.get_interval_for_event(event)
         delta_hard = timedelta(seconds=self.interval_hard)
-
-        field = self.get_interval_field_for_event(event)
-        delta = getattr(self, 'interval_' + field)
-        last_sent = getattr(history, 'last_' + field)
+       
+        last_sent = self.get_last_sent_for_event(event, history)
        
         if delta >= 0:
             # Notifications for this event are enabled.
@@ -120,6 +151,12 @@ class Notification(models.Model):
                     return False
 
     def get_history_for_service(self, service):
+        """
+        Return the NotificationHistory object for this notification and
+        a service.
+        If none exists yet, a new one is created.
+        """
+
         history = self.histories.filter(service=service).first()\
           or NotificationHistory(notification=self, service=service)
 
@@ -149,7 +186,7 @@ class Notification(models.Model):
         now = timezone.now()
 
         # Update last_sent for specific notification type.
-        field = self.get_interval_field_for_event(event)
+        field = self.get_last_sent_field_for_event(event)
         setattr(history, 'last_' + field, now)
 
         # Update general last_sent.
