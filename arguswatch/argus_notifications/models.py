@@ -104,7 +104,7 @@ class Notification(models.Model):
 
         # For interval_stays_ok, the last_sent field is used.
         # Otherwise, the customly named field is.
-        return field if field != 'interval_stays_ok' else 'last_sent'
+        return field if field != 'last_stays_ok' else 'last_sent'
 
     def get_last_sent_for_event(self, event, history):
         """
