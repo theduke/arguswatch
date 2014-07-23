@@ -91,7 +91,7 @@ class Notification(models.Model):
         Determine the interval in seconds to use for an event.
         """
 
-        field = self.get_interval_for_event(event)
+        field = self.get_interval_field_for_event(event)
         return getattr(self, field)
 
     def get_last_sent_field_for_event(self, event):
@@ -100,7 +100,7 @@ class Notification(models.Model):
         """
 
         # Reuse logic from interval field determination.
-        field = self.get_interval_field_for_event(event)
+        field = self.get_interval_field_for_event(event).replace('interval_', 'last_')
 
         # For interval_stays_ok, the last_sent field is used.
         # Otherwise, the customly named field is.
@@ -112,7 +112,7 @@ class Notification(models.Model):
         for a speicic event kind was sent.
         """
 
-        return getattr(event, self.get_last_sent_field_for_event(event))
+        return getattr(history, self.get_last_sent_field_for_event(event))
 
     def should_notify(self, service, event):
         """
