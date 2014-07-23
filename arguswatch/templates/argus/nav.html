@@ -14,17 +14,26 @@
                 <li>
                     <a href="{% url "argus_services" %}">List</a>
                 </li>
-                <li>
-                    <a href="{% url "argus_service_create" %}">Add Service</a>
-                </li>
+                
             </ul>
         </li>
 
-        <li class="">
-            <a href="{% url "argus_service_groups" %}">Service Groups</a>
-        </li>
-        <li class="">
-            <a href="{% url "argus_service_configurations" %}">Service Templates</a>
+        <li class="dropdown">
+            <a class="dropdown-toggle" data-toggle="dropdown" href="#">
+              Configuration <span class="caret"></span>
+            </a>
+            <ul class="dropdown-menu" role="menu">
+                <li>
+                    <a href="{% url "argus_service_create" %}">Add Service</a>
+                </li>
+                <li role="presentation" class="divider"></li>
+                <li>
+                    <a href="{% url "argus_service_groups" %}">Service Groups</a>
+                </li>
+                <li>
+                     <a href="{% url "argus_service_configurations" %}">Service Templates</a>
+                </li>
+            </ul>
         </li>
     </ul>
 </div>
