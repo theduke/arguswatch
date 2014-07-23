@@ -48,6 +48,6 @@ class ArgusChecker(Task):
             return (Service.STATE_UNKNOWN, 'Unknown exception: {}: {}'.format(
                 e.__class__, e))   
 
-        return (Service.STATE_UP, msg or '')
+        return (Service.STATE_OK, msg or '')
 
 tasks.register(ArgusChecker)
