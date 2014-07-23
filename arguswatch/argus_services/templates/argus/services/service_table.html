@@ -4,6 +4,7 @@
   <tr>
     <th>Name</th>
     <th>Status</th>
+    <th>Message</th>
     <th>Last Check</th>
     {% if can_control %}
     <th>Control</th> 
@@ -27,6 +28,7 @@
       {{ state }}
       {% endif %}
     </td>
+    <td class="message">{{ item.state_message }}</td>
     <td class="last_check">{% if item.last_checked %}{{ item.last_checked|timesince }} ago{% else %}NEVER{% endif %}</td>
     {% if can_control %}
     <td class="control">

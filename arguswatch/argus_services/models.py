@@ -92,7 +92,7 @@ class ServiceGroup(MPTTModel):
 
     def save(self, *args, **kwargs):
         self.slug = slugify(self.name)
-        super(ServiceGroup, self).save(*args, **kwargs)
+        super(ServiceGroup, self).save(*args ,**kwargs)
 
 
 class Service(models.Model):
@@ -489,7 +489,8 @@ class Service(models.Model):
 
         # Set new state and provisional state.
         self.state = event.new_state
-        self.provisional = event.new_state_provisional
+        self.state_provisional = event.new_state_provisional
+        self.state_message = event.message
 
         # If state was provisional, but is not provisional anymore,
         # retry counter must be reset to 0.
