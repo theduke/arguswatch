@@ -272,7 +272,7 @@ class Service(models.Model):
         from arguswatch.celery import checker
 
         result = None
-        result_data = None
+        result_data = {}
 
         if run_locally:
             logger.info("Executing check for service {} on webserver!".format(self))
@@ -346,7 +346,7 @@ class Service(models.Model):
 
         if self.state_provisional:
             # State is provisional, so use provisional interval.
-            interval = selfconfig.check_interval_provisional
+            interval = self.config.check_interval_provisional
         else:
             # State is locked (not provisional).
             # Each state has a custom interval, so 
