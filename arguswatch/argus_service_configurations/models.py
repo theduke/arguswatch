@@ -18,11 +18,18 @@ class ServiceConfiguration(models.Model):
     name = models.CharField(max_length=50, blank=True, unique=True, help_text='Descriptive name for this service configuration template.')
     description = models.TextField(blank=True)
 
-    check_interval = models.PositiveIntegerField(default=60*10, help_text="Interval in which checks for this service are run if state is OK.")
-    retry_interval_soft = models.PositiveIntegerField(default=60*2, help_text='Interval in which checks for this service are run if service is DOWN state type is SOFT.')
-    retry_interval_hard = models.PositiveIntegerField(default=60*10, help_text='Time after which a retry is run if service is DOWN and state type is HARD')
-    max_retries_soft = models.PositiveSmallIntegerField(default=3, help_text='How many retries are run for a service that goes DOWN.')
-
+    check_interval_ok = models.PositiveIntegerField(default=60*15, 
+        help_text="Check interval if service is OK (in seconds).")
+    check_interval_provisional = models.PositiveIntegerField(default=60*5, 
+        help_text='Check interval for provisional states (down, unknown).')
+    check_interval_warning = models.PositiveIntegerField(default=60*10, 
+        help_text='Check interval if service state is WARNING (in seconds).')
+    check_interval_down = models.PositiveIntegerField(default=60*10, 
+        help_text='Check interval if service is DOWN (in seconds).')
+    check_interval_unknown = models.PositiveIntegerField(default=60*10, 
+        help_text='Check interval if service is UNKNOWN (in seconds).')
+    max_retries = models.PositiveSmallIntegerField(default=3, 
+        help_text='Number of retries before a provisional state is locked in (applies to down and unknown)')
 
     passive_check_allowed = models.BooleanField(default=False)
     passive_check_ips = models.TextField(blank=True, help_text='Optional list of IPs that are allowed to deliver passive checks. Separated by ;')
@@ -30,15 +37,12 @@ class ServiceConfiguration(models.Model):
 
     api_can_trigger_events = models.BooleanField(default=False)
 
-
     class Meta:
         verbose_name = _('ServiceConfiguration')
         verbose_name_plural = _('ServiceConfigurations')
 
-
     def __str__(self):
         return self.name
-
 
     def get_passive_check_ips(self):
         """

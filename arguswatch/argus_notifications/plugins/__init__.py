@@ -2,7 +2,7 @@
 
 import logging
 
-from arguswatch.argus_services.models import Service
+from arguswatch.argus_services.models import Service, Event
 
 
 class PluginImplementationError(Exception):
@@ -94,39 +94,77 @@ class NotificationPlugin(metaclass=PluginManager):
         last_state_change = service_data['last_state_change'].strftime('%d.%m.%Y %H:%M') if service_data['last_state_change'] else 'NEVER'
         last_ok = service_data['last_ok'].strftime('%d.%m.%Y %H:%M') if service_data['last_ok'] else 'NEVER'
 
-        if event == Service.EVENT_REMAINS_UP:
+
+    EVENT_GOES_UNKNOWN_PROVISIONAL = 'goes_unknown_provisional'
+    EVENT_STAYS_UNKNOWN_PROVISIONAL = 'stays_unknown_provisional'
+    EVENT_GOES_UNKNOWN = 'goes_unknown'
+    EVENT_STAYS_UNKNOWN = 'stays_unknown'
+
+
+        if event == Event.EVENT_STAYS_OK:
             subject = "Service {s} is UP".format(s=name)
             msg = "Service {s} is currently up, and has been up since {c}".format(
                 s=name, c=last_state_change
             )
-        elif event == Service.EVENT_CRITICAL_SOFT:
-            subject = "Service {s} went DOWN (soft)".format(s=name)
-            msg = "Service {s} was up, but went DOWN (softly).\nThe service was up last at: {o}".format(
+        elif event == Event.EVENT_GOES_OK:
+            if event.old_state_provisional:
+                subject = "Service {s} RECOVERY (soft)".format(s=name)
+                msg = "Service {s} was down (soft), and CAME UP.\n".format(
+                    s=name
+                )
+            else:
+                subject = "Service {s} RECOVERY".format(s=name)
+                msg = "Service {s} was down (hard), but RECOVERED, and is UP now.\n".format(
+                    s=name, o=last_ok
+                )
+        elif event == Event.EVENT_GOES_DOWN_PROVISIONAL:
+            subject = "Service {s} went DOWN (provisional)".format(s=name)
+            msg = "Service {s} was up, but went DOWN (provisional).\nThe service was up last at: {o}".format(
                 s=name, o=last_ok
             )
-        elif event == Service.EVENT_WARNING_SOFT:
-            subject = "Service {s} stays DOWN (soft)".format(s=name)
-            msg = "Service {s} remains DOWN (softly).\nThe service was up last at: {o}".format(
+        elif event == Event.EVENT_STAYS_DOWN_PROVISIONAL:
+            subject = "Service {s} stays DOWN (provisional)".format(s=name)
+            msg = "Service {s} remains DOWN (provisional).\nThe service was up last at: {o}".format(
                 s=name, o=last_ok
             )
-        elif event == Service.EVENT_RECOVERY_SOFT:
-            subject = "Service {s} RECOVERY (soft)".format(s=name)
-            msg = "Service {s} was down (soft), and CAME UP.\n".format(
-                s=name
-            )
-        elif event == Service.EVENT_CRITICAL_HARD:
+        elif event == Event.EVENT_GOES_DOWN:
             subject = "Service {s} went DOWN".format(s=name)
             msg = "Service {s} was rechecked multiple times, but is DOWN.\nThe service was up last at: {o}".format(
                 s=name, o=last_ok
             )
-        elif event == Service.EVENT_WARNING_HARD:
+        elif event == Event.EVENT_STAYS_DOWN:
             subject = "Service {s} stays DOWN".format(s=name)
             msg = "Service {s} remains DOWN (HARD).\nThe service was up last at: {o}".format(
                 s=name, o=last_ok
             )
-        elif event == Service.EVENT_RECOVERY_HARD:
-            subject = "Service {s} RECOVERY".format(s=name)
-            msg = "Service {s} was down (hard), but RECOVERED, and is UP now.\n".format(
+        elif event == Event.EVENT_GOES_UNKNOWN_PROVISIONAL:
+            subject = "Service {s} went UNKNOWN (provisional)".format(s=name)
+            msg = "Service {s} was up, but went UNKNOWN (provisional).\nThe service was up last at: {o}".format(
+                s=name, o=last_ok
+            )
+        elif event == Event.EVENT_STAYS_UNKNOWN_PROVISIONAL:
+            subject = "Service {s} stays UNKNOWN (provisional)".format(s=name)
+            msg = "Service {s} remains UNKNOWN (provisional).\nThe service was up last at: {o}".format(
+                s=name, o=last_ok
+            )
+        elif event == Event.EVENT_GOES_UNKNOWN:
+            subject = "Service {s} went UNKNOWN".format(s=name)
+            msg = "Service {s} was rechecked multiple times, but is UNKNOWN.\nThe service was up last at: {o}".format(
+                s=name, o=last_ok
+            )
+        elif event == Event.EVENT_STAYS_UNKNOWN:
+            subject = "Service {s} stays UNKNOWN".format(s=name)
+            msg = "Service {s} remains UNKNOWN (HARD).\nThe service was up last at: {o}".format(
+                s=name, o=last_ok
+            )
+        elif event == Event.EVENT_GOES_WARNING:
+            subject = "Service {s}: NEW WARNING".format(s=name)
+            msg = "Service {s} changed to state WARNING.\nThe service was up last at: {o}".format(
+                s=name, o=last_ok
+            )
+        elif event == Event.EVENT_STAYS_WARNING:
+            subject = "Service {s} stays WARNING".format(s=name)
+            msg = "Service {s} stays in state WARNING.\nThe service was up last at: {o}".format(
                 s=name, o=last_ok
             )
         else:
@@ -135,7 +173,7 @@ class NotificationPlugin(metaclass=PluginManager):
         return (subject, msg)
 
 
-    def do_notify(self, settings, service_data, event, old_service_data=None):
+    def do_notify(self, settings, service_data, event):
         """
         Perfom the actual plugin check.
         MUST throw PluginCheckError when the check fails.

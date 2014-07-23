@@ -53,7 +53,6 @@ class ServicePluginConfiguration(PolymorphicModel):
     class Meta:
         pass
 
-
     def __str__(self):
         return self.__class__.__name__
 
@@ -108,15 +107,18 @@ class Service(models.Model):
 
     name = models.CharField(max_length=100)
     description = models.TextField(blank=True)
-    notes = models.TextField(blank=True, verbose_name='Additional notes for further information')
+    notes = models.TextField(blank=True, 
+        verbose_name='Additional notes for further information')
     tags = TaggableManager(blank=True)
 
     slug = models.SlugField(unique=True)
 
     # Service parent. Important for check hierarchy.
-    parent = models.ForeignKey('Service', null=True, blank=True, related_name='children')
+    parent = models.ForeignKey('Service', null=True, blank=True,
+        related_name='children')
 
-    groups = models.ManyToManyField(ServiceGroup, null=True, blank=True, related_name='services')
+    groups = models.ManyToManyField(ServiceGroup, null=True, blank=True, 
+        related_name='services')
 
     #### Configuration fields. ####
 
@@ -125,9 +127,11 @@ class Service(models.Model):
     # Relation to plugin configuration.
     plugin_config = models.ForeignKey(ServicePluginConfiguration, null=True, related_name='service')
 
-    service_config = models.ForeignKey(ServiceConfiguration, related_name='services', verbose_name='Service Template')
+    service_config = models.ForeignKey(ServiceConfiguration, 
+        related_name='services', verbose_name='Service Template')
 
-    enabled = models.BooleanField(default=True, help_text='Disable to pause checks and notifications for this service.')
+    enabled = models.BooleanField(default=True, 
+        help_text='Disable to pause checks and notifications.')
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -135,50 +139,27 @@ class Service(models.Model):
 
     #### State related fields ###
 
-    STATE_TYPE_SOFT = 1
-    STATE_TYPE_HARD = 2
-
-    STATE_TYPE_CHOICES = (
-        (STATE_TYPE_SOFT, 'soft'),
-        (STATE_TYPE_HARD, 'hard'),
-    )
-
-    STATE_UNKNOWN = 0
-    STATE_OK = 1
-    STATE_WARNING = 2
-    STATE_CRITICAL = 3
+    STATE_UNKNOWN = 'unknown'
+    STATE_DOWN = 'down'
+    STATE_WARNING = 'warning'
+    STATE_OK = 'ok'
 
     STATE_CHOICES = (
-        (STATE_OK, 'ok'),
+        (STATE_UNKNOWN, 'unknown'),
+        (STATE_DOWN, 'down'),
         (STATE_WARNING, 'warning'),
-        (STATE_CRITICAL, 'critical'),
-    ) 
-
-    CHECK_STATE_UP = "up"
-    CHECK_STATE_DOWN = "down"
-    CHECK_STATE_KNOWN_ERROR = "known_error"
-    CHECK_STATE_UNKNOWN_ERROR = "unknown_error"
-
-    EVENT_RECOVERY_SOFT = 'recovery_soft'
-    EVENT_RECOVERY_HARD = 'recovery_hard'
-    EVENT_CRITICAL_SOFT = 'critical_soft'
-    EVENT_CRITICAL_HARD = 'critical_hard'
-    EVENT_WARNING_SOFT = 'warning_soft'
-    EVENT_WARNING_HARD = 'warning_hard'
-    EVENT_REMAINS_UP = 'remains_up'
-
-    EVENTS = (
-        EVENT_RECOVERY_SOFT,
-        EVENT_RECOVERY_HARD,
-        EVENT_CRITICAL_SOFT,
-        EVENT_CRITICAL_HARD,
-        EVENT_WARNING_SOFT,
-        EVENT_WARNING_HARD,
-        EVENT_REMAINS_UP,
+        (STATE_OK, 'ok'),
     )
 
-    state_type = models.PositiveSmallIntegerField(default=STATE_TYPE_HARD)
-    state = models.PositiveSmallIntegerField(default=STATE_UNKNOWN)
+    # Current event state.
+    state = models.CharField(max_length=20, choices=STATE_CHOICES, 
+        default=STATE_UNKNOWN)
+    # Wether state is provisional.
+    # State will stay provisional, until a number of rechecks have been 
+    # executed. The amount is determined by service_config.
+    state_provisional = models.BooleanField(default=False)
+    # Message specifying state. Most important for warning.
+    state_message = models.TextField(blank=True)
 
     # The last time a check was issued.
     last_issued = models.DateTimeField(null=True)
@@ -193,6 +174,7 @@ class Service(models.Model):
     last_state_change = models.DateTimeField(null=True)
 
     # The number of retries that have been executed for this service.
+    # Important to switch from provisional to hard states.
     num_retries = models.PositiveSmallIntegerField(default=0)
 
 
@@ -209,17 +191,14 @@ class Service(models.Model):
     def __str__(self):
         return self.name
 
-
     def save(self, *args, **kwargs):
         self.slug = slugify(self.name)
-        super(Service, self).save(*args, **kwargs)
-
+        super(ServiceSTATE_UNKNOWN_PROVISIONAL, self).save(*args, **kwargs)
 
     def to_dict(self):
         """
         Convert to a dictionary, with the most important fields.
         """
-        
         return {
             'name': self.name,
             'description': self.description,
@@ -243,33 +222,6 @@ class Service(models.Model):
         """
 
         return self.get_plugin().name
-
-
-    def get_state_description(self):
-        """
-        Returns a usable "up", "down", "unknown" or "warning"
-        """
-
-        if self.state == self.STATE_UNKNOWN:
-            return 'unknown'
-        if self.state == self.STATE_OK:
-            return "up"
-        elif self.state_type == self.STATE_TYPE_SOFT:
-            return "warning"
-        elif self.state in (self.STATE_CRITICAL, self.STATE_WARNING):
-            return "down"
-
-
-    def get_state_display(self):
-        for row in self.STATE_CHOICES:
-            if row[0] == self.state:
-                return row[1]
-
-    def get_state_type_display(self):
-        for row in self.STATE_TYPE_CHOICES:
-            if row[0] == self.state_type:
-                return row[1]
-
 
     def issue_check(self, run_locally=False):
         if self.celery_task_id:
@@ -296,7 +248,8 @@ class Service(models.Model):
                 logger.removeHandler(handler)
             logger.addHandler(handler)
 
-            result = checker.apply((self.plugin, self.plugin_config.get_settings()), {'logger': logger})
+            result = checker.apply((self.plugin, 
+                self.plugin_config.get_settings()), {'logger': logger})
             result_data = self.handle_check_result(result, log=logger)
 
             # Flush logging handler to ensure all logs are written to streamIO stream.
@@ -312,26 +265,37 @@ class Service(models.Model):
 
         return result_data if run_locally else result
 
+    def issue_passive_check(self, data, run_locally=True):
+        # TODO: IMPLEMENT!
+        raise Exception("Not implemented")
 
     def handle_check_result(self, result, log=None):
+        """
+        Handle the check result from a service check done by a service plugin
+        by determining which event should be triggered for the service state
+        that was determined by the check, and then properly process the event
+        to change service state and send the appropriate notifications.
+
+        The result is a celery task result object
+        """
+
         if not log:
             log = logging.getLogger('django.argus')
 
+        # Retrieve data from task result.
         state, message = result.get()
 
-        # Event to trigger.
-        event = None
+        # Build an Event instance.
+        event = self.determine_event(state, message)
+        log.debug("Determined event for service {}: {}".format(self, event.event))
 
-        if state == Service.CHECK_STATE_UP or state == Service.CHECK_STATE_DOWN:
-            event = self.determine_event(state)
-            log.debug("Determined event for service {}: {}".format(self, event))
-            self.process_event(event, message)
-        elif state == Service.CHECK_STATE_KNOWN_ERROR:
-            # TODO: handle with retry.
-            pass
-        elif state == Service.CHECK_STATE_UNKNOWN_ERROR:
-            # TODO: handle with retry.
-            pass
+        # Update last_checked and celery task id.
+        # Service is persisted in process_event().
+        self.last_checked = timezone.now()
+        self.celery_task_id = ''
+
+        # Process event.
+        self.process_event(event)
 
         return {
             'state': state,
@@ -339,54 +303,47 @@ class Service(models.Model):
             'event': event,
         }
 
-
-    def issue_passive_check(self, data, run_locally=True):
-        # TODO: implement celery execution of passive checks.
-        event = self.get_plugin()().on_data_received(data)
-        if event:
-            self.process_event(event)
-
-
     def determine_appropriate_check_interval(self):
         """
-        Based on the current state and state type of the service,
+        Based on the current state of the service,
         determine which config interval should be used.
         Available: check_interval, retry_interval_soft, retry_interval_hard.
         """
 
+        config = self.service_config
+        state = self.state
         interval = None
 
-        if self.state == Service.STATE_OK:
-            # State is OK.
-            # Relevant interval is the check_interval.
-            interval = self.service_config.check_interval
-        elif self.state_type == Service.STATE_TYPE_SOFT:
-            # State type is SOFT.
-            # Reagardless whether state is critical or warning,
-            # the relevant interval is retry_interval_soft
-           interval = self.service_config.retry_interval_soft
-        elif self.state_type == Service.STATE_TYPE_HARD:
-            # State type is HARD.
-            # HARD means OK, which is handled by the first if branch,
-            # or CRITICAL/WARNING.
-            # Similar to the second branch for SOFT, the relevant interval
-            # for this case is retry_interval_hard.
-            
-           interval = self.service_config.retry_interval_hard
+        if self.state_provisional:
+            # State is provisional, so use provisional interval.
+            interval = selfconfig.check_interval_provisional
+        else:
+            # State is locked (not provisional).
+            # Each state has a custom interval, so 
+            # use the appropriate one.
+            if state == self.STATE_OK:
+                interval = config.check_interval_ok
+            elif state == self.STATE_WARNING:
+                interval = config.check_interval_warning
+            elif state == self.STATE_DOWN:
+                interval = config.check_interval_down
+            elif state == self.STATE_UNKNOWN:
+                interval = config.check_interval_unknown
 
         return interval
 
-
     def is_check_needed(self):
         """
-        Determine, if a new check needs to be issued right now.
+        Determine, if a new check needs to be issued right now,
+        based on service configuration.
         """
 
         # For passive plugins, check is never needed.
         if self.get_plugin().is_passive:
             return False
 
-        # Always need to check if no last_check time is set.
+        # If no check was run before (true for newly added services), then 
+        # a check is always needed.
         if not self.last_checked:
             return True
 
@@ -400,56 +357,153 @@ class Service(models.Model):
             # Nothing needs to be done.
             return False
 
+    def determine_event(self, state, message):
+        """
+        Determine the event that needs to be triggered based on the 
+        current state of the service, as determined by a service plugin 
+        check.
 
-    def determine_event(self, state):
+        Returns an Event instance.
+        """
+
         # For readability!
-        was_up = self.state == self.STATE_OK
-        was_down = not was_up
+        old_state = self.state
+        was_provisional = self.state_provisional
 
+        max_retries = self.service_config.max_retries
+        retries = self.num_retries + 1
 
-        evt = None
+        event = None
 
-        if state == self.CHECK_STATE_UP:
-            # Service IS UP now.
+        if state == self.STATE_OK:
+            # Service IS OK now.
             
-            if was_down:
-                # Service WAS DOWN before, so trigger recovery event.
-                if self.state_type == self.STATE_TYPE_SOFT:
-                    # Soft recovery.
-                    evt = self.EVENT_RECOVERY_SOFT
-                else:
-                    # Hard recovery.
-                    evt = self.EVENT_RECOVERY_HARD
+            if old_state == self.STATE_OK:
+                # Stays OK.
+                event = Event.EVENT_STAYS_OK
+
             else:
-                evt = self.EVENT_REMAINS_UP
-        elif state == self.CHECK_STATE_DOWN:
-            # Service IS DOWN now.
-            
-            if was_up:
-                # Service WAS UP before. 
-                # Trigger critical soft event.
-                evt = self.EVENT_CRITICAL_SOFT
-            elif was_down:
-                # Service WAS alread DOWN.
-                
-                # Handle SOFT and HARD state separately.
-                if self.state_type == self.STATE_TYPE_SOFT:
-                    # Event type IS SOFT. 
-                    # We remain in SOFT, until max_retries_soft is reached.
-                    
-                    try_index = self.num_retries + 1
-                    if try_index < self.service_config.max_retries_soft:
-                        # Still retries left, so just issue SOFT WARNING.
-                        evt = self.EVENT_WARNING_SOFT
-                    else:
-                        # Maximum retries reached, so issue a HARD CRITICAL.
-                        evt = self.EVENT_CRITICAL_HARD
-                else:
-                    # Event type is HARD.
-                    # Issue HARD WARNING.
-                    evt = self.EVENT_WARNING_HARD
+                # Service was NOT OK before, so trigger GOES_OK event.
+                event = Event.EVENT_GOES_OK
+               
+        elif state == self.STATE_WARNING:
+            # Service is in state WARNING now.
 
-        return evt
+            if old_state == self.STATE_WARNING:
+                # Was already in warning.
+                event = Event.EVENT_STAYS_WARNING
+            else:
+                # Goes to state warning.
+                event = Event.EVENT_GOES_WARNING
+        elif state == self.STATE_DOWN:
+            # Service is DOWN now.
+
+            if old_state == self.STATE_DOWN:
+                # Service was already down.
+                # If state was provisionally down, check if maximum retries
+                # have been reached. If so, state is no longer provisional.
+
+                if was_provisional:
+                    if retries >= max_retries:
+                        # Was provisional, but max_retries have been reached,
+                        # so state locks in as down.
+                        event = Event.EVENT_GOES_DOWN
+                    else:
+                        # Have not reached max_retries yet, so remain down 
+                        # provisionally.
+                        event = Event.EVENT_STAYS_DOWN_PROVISIONAL
+                else:
+                    # Was locked as down and stays that way.
+                    event = Event.EVENT_STAYS_DOWN
+            else:
+                # Service is down now, but was not before.
+
+                if max_retries < 1:
+                    # No retries allowed, so the provisional down state is skipped
+                    # and service goes straight to down.
+                    event = Event.EVENT_GOES_DOWN
+                else:
+                    # Retries allowed, so go to provisional down.
+                    event = Event.EVENT_GOES_DOWN_PROVISIONAL
+        elif state == self.STATE_UNKNOWN:
+            # Service is UNKNOWN now.
+
+            if old_state == self.STATE_UNKNOWN:
+                # Service was already unknown.
+                # If state was provisionally unknown, check if maximum retries
+                # have been reached. If so, state is no longer provisional.
+
+                if was_provisional:
+                    if retries >= max_retries:
+                        # Was provisional, but max_retries have been reached,
+                        # so state locks in as unknown.
+                        event = Event.EVENT_GOES_UNKNOWN
+                    else:
+                        # Have not reached max_retries yet, so remain unknown 
+                        # provisionally.
+                        event = Event.EVENT_STAYS_UNKNOWN_PROVISIONAL
+                else:
+                    # Was locked as unknown and stays that way.
+                    event = Event.EVENT_STAYS_UNKNOWN
+            else:
+                # Service is unknown now, but was not before.
+
+                if max_retries < 1:
+                    # No retries allowed, so the provisional unknown state is skipped
+                    # and service goes straight to unknown.
+                    event = Event.EVENT_GOES_UNKNOWN
+                else:
+                    # Retries allowed, so go to provisional unknown.
+                    event = Event.EVENT_GOES_UNKNOWN_PROVISIONAL
+
+        # Determine if new state is provisional.
+        is_provisional = event in (
+            Event.EVENT_GOES_DOWN_PROVISIONAL,
+            Event.EVENT_STAYS_DOWN_PROVISIONAL,
+            Event.EVENT_GOES_UNKNOWN_PROVISIONAL,
+            Event.EVENT_STAYS_UNKNOWN_PROVISIONAL,
+        )
+
+        instance = Event(
+            old_state=state, old_state_provisional=was_provisional
+            new_state=state, new_state_provisional=is_provisional,
+            event=event,
+            message=message or '',
+            time=timezone.now()
+        )
+
+        return instance
+
+    def trigger_event(self, event):
+        """
+        Adapt the state of this event based on an Event instance.
+
+        DOES NOT persist service.
+        Persistence is handled by process_event.
+
+        Returns Event instance describing the event.
+        """
+
+        now = event.time
+
+        kind = event.event
+
+        # Set new state and provisional state.
+        self.state = event.new_state
+        self.provisional = event.new_state_provisional
+
+        # If state was provisional, but is not provisional anymore,
+        # retry counter must be reset to 0.
+        if event.old_state_provisional and not event.new_state_provisional:
+            self.num_retries = 0
+
+        # If state has changed, update last_state_change.
+        if event.old_state != event.new_state:
+            self.last_state_change = now
+
+        # If service is OK now, update last_ok.
+        if event.new_state == self.STATE_OK:
+            self.last_ok = now
 
 
     def determine_notifications_to_send(self, event):
@@ -457,21 +511,19 @@ class Service(models.Model):
         Determine which notifications should be sent for an event.
         """
 
-        return [n for n in self.service_config.notifications.all() if n.should_send(self, event)]
+        return [n for n in self.service_config.notifications.all() if n.should_notify(self, event)]
 
-
-    def process_event(self, event, message):
+    def process_event(self, event):
         """
         Do the complete workflow that takes place, 
         when an event occurs.
 
-        Includes the executio of trigger_event.
+        Includes the execution of trigger_event and persisting the service.
+
+        event is an Event instance.
         """
 
         self.trigger_event(event)
-        self.last_checked = timezone.now()
-
-        self.celery_task_id = ''
         self.save()
 
         notifications = self.determine_notifications_to_send(event)
@@ -479,54 +531,42 @@ class Service(models.Model):
         for n in notifications:
             n. do_notify(self, event)
 
+        # TODO: Event persistance.
 
-    def trigger_event(self, event):
-        """
-        Adapt the state of this event based on an event type.
-        Note that the 1st argument event is one of self.CHECK_STATE_*.
 
-        DOES NOT persist service.
-        Persistence is handled by process_event
-        """
+class Event(models.Model):
 
-        now = timezone.now()
+    EVENT_GOES_UNKNOWN_PROVISIONAL = 'goes_unknown_provisional'
+    EVENT_STAYS_UNKNOWN_PROVISIONAL = 'stays_unknown_provisional'
+    EVENT_GOES_UNKNOWN = 'goes_unknown'
+    EVENT_STAYS_UNKNOWN = 'stays_unknown'
+    EVENT_GOES_DOWN_PROVISIONAL = 'goes_down_provisional'
+    EVENT_STAYS_DOWN_PROVISIONAL = 'goes_down'
+    EVENT_GOES_DOWN = 'goes_down'
+    EVENT_STAYS_DOWN = 'stays_down'
+    EVENT_GOES_WARNING = 'goes_warning'
+    EVENT_STAYS_WARNING = 'stays_warning'
+    EVENT_GOES_OK = 'goes_ok'
+    EVENT_STAYS_OK = 'stays_ok'
 
-        if event == self.EVENT_RECOVERY_HARD:
-            # Service WAS down (HARD) and CAME UP.
-            self.state_type = self.STATE_TYPE_HARD
-            self.state = self.STATE_OK
-            self.num_retries = 0
-            self.last_ok = now
-            self.last_state_change = now
-        elif event == self.EVENT_RECOVERY_SOFT:
-            # Service WAS down (SOFT) and CAME UP.
-            self.state_type = self.STATE_TYPE_HARD
-            self.state = self.STATE_OK
-            self.num_retries = 0
-            self.last_ok = now
-            self.last_state_change = now
-        elif event == self.EVENT_WARNING_HARD:
-            # Service WAS down (HARD) and IS STILL down.
-            self.state = self.STATE_WARNING
-            self.num_retries += 1
-        elif event == self.EVENT_WARNING_SOFT:
-            # Service WAS down (SOFT) and IS STILL down.
-            # max retries have not been reached yet.
-            # Just increment the counter.
-            self.state = self.STATE_WARNING
-            self.num_retries += 1
-        elif event == self.EVENT_CRITICAL_HARD:
-            # Service WAS DOWN (SOFT) and is now DOWN (HARD).
-            self.state_type = self.STATE_TYPE_HARD
-            self.state = self.STATE_CRITICAL
-            self.num_retries = 0
-            self.last_state_change = now
-        elif event == self.EVENT_CRITICAL_SOFT:
-            # Service WAS UP and went DOWN.
-            self.state_type = self.STATE_TYPE_SOFT
-            self.state = self.STATE_WARNING
-            self.last_state_change = now
-        elif event == self.EVENT_REMAINS_UP:
-            self.last_ok = now
-        else:
-            raise Exception("Unknown Service event: " + event)
+    EVENT_CHOICES = (
+        (EVENT_GOES_UNKNOWN, 'goes_unknown'), 
+        (EVENT_STAYS_UNKNOWN, 'stays_unknown'), 
+        (EVENT_GOES_DOWN, 'goes_down'), 
+        (EVENT_STAYS_DOWN, 'stays_down'), 
+        (EVENT_GOES_WARNING, 'goes_warning'), 
+        (EVENT_STAYS_WARNING, 'stays_warning'), 
+        (EVENT_GOES_OK, 'goes_ok'), 
+        (EVENT_STAYS_OK, 'stays_ok'), 
+    )
+
+    old_state = models.CharField(max_length=20, choices=Service.STATE_CHOICES)
+    old_state_provisional = models.BooleanField()
+
+    new_state = models.CharField(max_length=20, choices=Service.STATE_CHOICES)
+    new_state_provisional = models.BooleanField()
+
+    event = models.CharField(max_length=20, choices=EVENT_CHOICES)
+    message = models.TextField(blank=True)
+
+    time = models.DateTimeField()

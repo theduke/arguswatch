@@ -41,7 +41,7 @@ class EmailNotification(NotificationPlugin):
     form_class = EmailPluginForm
 
 
-    def do_notify(self, settings, service_data, event, old_service_data=None):
+    def do_notify(self, settings, service_data, event):
         subject, message = self.build_subject_and_message(service_data, event)
 
         recipients = settings['emails'].split(';')

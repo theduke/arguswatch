@@ -29,10 +29,6 @@ from .plugins.email import EmailPluginConfig
 
 
 class Notification(models.Model):
-    class Meta:
-        verbose_name = _('Notification')
-        verbose_name_plural = _('Notifications')
-
     service_config = models.ForeignKey(ServiceConfiguration, related_name='notifications')
 
     # Fully qualified package name of the notification plugin.
@@ -43,63 +39,66 @@ class Notification(models.Model):
     name = models.CharField(max_length=100, help_text='Verbose name for this notification.')
     description = models.TextField(blank=True)
 
-    # Service.EVENT_REMAINS_UP
-    on_remains_up = models.BooleanField(default=False, help_text='Send notification if service continues to be up. (SUBJECT TO OK interval)')
-    # Service.EVENT_CRITICAL_SOFT
-    on_critical_soft = models.BooleanField(default=False, help_text='Send notification if service goes down soft.')
-    # Service.EVENT_WARNING_SOFT
-    on_warning_soft = models.BooleanField(default=False, help_text='Send notification if service continues to be down on retries (SOFT state).')
-    # Service.EVENT_RECOVERY_SOFT
-    on_recovery_soft = models.BooleanField(default=False, help_text='Send notification if service recovers from SOFT down.')
-    # Service.EVENT_CRITICAL_HARD
-    on_critical_hard = models.BooleanField(default=True, help_text='Send notification if service goes down hard.')
-    # Service.EVENT_WARNING_HARD
-    on_warning_hard = models.BooleanField(default=True, help_text='Send notification if service continues to be down (subject to interval_hard_warning).')
-    # Service.EVENT_RECOVERY_HARD
-    on_recovery_hard = models.BooleanField(default=True, help_text='Send notification if service recovers from HARD down.')
+    # For each event type from Event.EVENT_*,
+    # there is a soft and a hard limit.
+    # The soft limit specifies, how long (in seconds) after a notification for 
+    # the SAME event type has been sent, it can be sent again.
+    # The hard limit specifies the same, but in reference to the last time ANY 
+    # notification has been sent.
+    # -1 is for never send.
+    # 0 is for always send.
 
-    interval = models.PositiveIntegerField(default=60*30, help_text='Notification interval in seconds.')
-    interval_remains_up = models.PositiveIntegerField(default=60*60*24, help_text='Notification interval in seconds for service that stays up.')
-    interval_warning_hard = models.PositiveIntegerField(default=60*60, help_text='Notification interval in seconds for service that stays DOWN (hard).')
-    interval_critical_hard = models.PositiveIntegerField(default=10*60, help_text='Notification interval in seconds for service that GOES DOWN (hard).')
-    interval_recovery_hard = models.PositiveIntegerField(default=10*60, help_text='Notification interval in seconds for service that COMES UP (hard).')
+    interval_state_change_provisional = models.SmallIntegerField(default=-1)
+    interval_state_stays_provisional = models.SmallIntegerField(default=-1)
+    interval_state_change = models.SmallIntegerField(default=60)
+    interval_state_stays = models.SmallIntegerField(default=60*60*6)
+    interval_change_ok = models.SmallIntegerField(default=0)
+    interval_hard = models.PositiveSmallIntegerField(default=5)
+
+    class Meta:
+        verbose_name = _('Notification')
+        verbose_name_plural = _('Notifications')
 
 
-    def should_send(self, service, evt):
+    def get_interval_field_for_event(self, event):
+        event_stays = event.old_state == event.new_state
+        provisional_stays = event.old_state_provisional == event.new_state_provisional
+
+         # OK interval overwrites defaults.
+        if event.new_state == Service.STATE_OK ^ event.old_state == Service.STATE_OK:
+            return 'change_ok'
+
+        if event_stays and provisional_stays:
+            if event.new_state_provisional:
+                return 'state_stays_provisional'
+            else:
+                return 'state_stays'
+        else:
+            if event.new_state_provisional:
+                return 'state_change_provisional'
+            else:
+                return 'state_change'
+
+    def should_notify(self, service, event):
         """
         Determine if notification should be sent for an event.
         """
 
+        history = self.get_history_for_service(service)
+
+        last_sent_hard = history.last_sent
+        last_sent = None
+
         now = timezone.now()
+
         delta = None
+        delta_hard = timedelta(seconds=self.interval_hard)
 
-        if evt == Service.EVENT_REMAINS_UP:
-            if self.on_remains_up:
-                delta = self.interval_remains_up
-        elif evt == Service.EVENT_CRITICAL_SOFT:
-            if self.on_critical_soft:
-                delta = self.interval
-        elif evt == Service.EVENT_WARNING_SOFT:
-            if self.on_warning_soft:
-                delta = self.interval
-        elif evt == Service.EVENT_RECOVERY_SOFT:
-            if self.on_recovery_soft:
-                delta = self.interval
-        elif evt == Service.EVENT_CRITICAL_HARD:
-            if self.on_critical_hard:
-                delta = self.interval_critical_hard
-        elif evt == Service.EVENT_WARNING_HARD:
-            if self.on_warning_hard:
-                delta = self.interval_warning_hard
-        elif evt == Service.EVENT_RECOVERY_HARD:
-            if self.on_recovery_hard:
-                delta = self.interval_recovery_hard
-
-        # Determine last sent for service.
-        sent_data = self.service_notifications.filter(service=service).first()
-        last_sent = sent_data.last_sent if sent_data else None
-
-        if delta:
+        field = self.get_interval_field_for_event(event)
+        delta = getattr(self, 'interval_' + field)
+        last_sent = getattr(history, 'last_' + field)
+       
+        if delta >= 0:
             # Notifications for this event are enabled.
             # Check time constraints.
 
@@ -110,8 +109,25 @@ class Notification(models.Model):
             else:
                 # Compare time passed to delta, and return 
                 # if more time than delta has passed.
-                return now - last_sent >= timedelta(seconds=delta)
+                should_send = now - last_sent >= timedelta(seconds=delta)
 
+                if should_send:
+                    # Sending is enabled, based on soft limits (for same
+                    # notification type.
+                    # Now check hard limit.
+
+                    if now - last_sent_hard >= delta_hard:
+                        return True
+                    else:
+                        return False
+                else:
+                    return False
+
+    def get_history_for_service(self, service):
+        history = self.histories.filter(service=service).first()\
+          or NotificationHistory(notification=self, service=service)
+
+        return history
 
     def get_plugin(self):
         """
@@ -119,7 +135,6 @@ class Notification(models.Model):
         """
 
         return get_cls_by_name(self.plugin)
-
 
     def get_plugin_settings(self):
         """
@@ -130,30 +145,39 @@ class Notification(models.Model):
 
         return self.plugin_config.get_settings()
 
-    def get_service_notification_for_service(self, service):
-        return self.service_notifications.filter(service=service).first() or \
-            ServiceNotifications(service=service, notification=self)
-
-
-    def do_notify(self, service, event, old_service_data=None):
+    def do_notify(self, service, event):
         plugin = self.get_plugin()()
-        plugin.do_notify(self.get_plugin_settings(), service.to_dict(), event, old_service_data)
+        plugin.do_notify(self.get_plugin_settings(), service.to_dict(), event)
 
-        sent_data = self.get_service_notification_for_service(service)
+        history = self.get_history_for_service(service)
+        now = timezone.now()
 
-        sent_data.last_sent = timezone.now()
-        sent_data.save()
+        # Update last_sent for specific notification type.
+        field = self.get_interval_field_for_event(event)
+        setattr(history, 'last_' + field, now)
+
+        # Update general last_sent.
+        history.last_sent = now
+
+        # Persist.
+        history.save()
 
     def __str__(self):
         return self.name
 
 
-class ServiceNotifications(models.Model):
-    notification = models.ForeignKey(Notification, related_name='service_notifications')
+class NotificationHistory(models.Model):
+    notification = models.ForeignKey(Notification, related_name='histories')
     service = models.ForeignKey(Service, related_name='notifications')
+
     last_sent = models.DateTimeField()
+    last_state_change_provisional = models.DateTimeField(null=True)
+    last_state_stays_provisional = models.DateTimeField(null=True)
+    last_state_change = models.DateTimeField(null=True)
+    last_state_stays = models.DateTimeField(null=True)
+    last_change_ok = models.DateTimeField(null=True)
 
     class Meta:
-        verbose_name = _('ServiceNotifications')
-        verbose_name_plural = _('ServiceNotificationss')
+        verbose_name = _('NotificationHistory')
+        verbose_name_plural = _('NotificationHistories')
         unique_together = (('notification', 'service'),)
