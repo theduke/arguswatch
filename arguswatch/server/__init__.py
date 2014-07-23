@@ -40,7 +40,7 @@ class Server:
                 time.sleep(sleep)
 
     def check_services(self):
-        for service in Service.objects.filter(enabled=True).select_related('service_config'):
+        for service in Service.objects.filter(enabled=True).select_related('config'):
             self.handle_service(service)
 
     def handle_service(self, service):

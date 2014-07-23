@@ -60,10 +60,10 @@ class ServiceDetailView(ExtraContextMixin, DetailView):
         'can_control': True,
     }
     select_related = (
-        'service_config', 'plugin_config', 
+        'config', 'plugin_config', 
         'tags', 
         'parent', 'children',
-        'service_config.notificataions',
+        'config.notificataions',
     )
 
 
@@ -160,7 +160,7 @@ def configure_service(request, pk):
     })
 
 def check_api_service_access(service):
-    config = service.service_config
+    config = service.config
 
     if not config.passive_check_allowed:
         raise PermissionDenied("Passive checks are not enabled for this service.")
@@ -181,7 +181,7 @@ def check_api_service_access(service):
 
 def argus_api_service_event(request, pk=None, slug=None):
     service = get_object_or_404(Service, pk=pk) if pk else get_object_or_404(Service, slug=slug)
-    if not service.service_config.api_can_trigger_events:
+    if not service.config.api_can_trigger_events:
         raise PermissionDenied("API event triggering support has not been enabled for this Service")
 
     # TODO: add proper handling of time.

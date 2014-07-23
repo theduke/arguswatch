@@ -27,8 +27,8 @@ class NotificationCreateView(UserViewMixin, CreateView):
     def form_valid(self, form):
         self.object = form.save(commit=False)
 
-        service_config = get_object_or_404(ServiceConfiguration, id=self.kwargs['service_pk'])
-        self.object.service_config = service_config
+        config = get_object_or_404(ServiceConfiguration, id=self.kwargs['service_pk'])
+        self.object.config = config
         self.object.save()
 
         return HttpResponseRedirect(self.get_success_url())
@@ -44,7 +44,8 @@ class NotificationUpdateView(UpdateView):
 
 
     def get_success_url(self):
-        return reverse('argus_service_configuration_detail', kwargs={'pk': self.object.service_config.id})
+        return reverse('argus_service_configuration_detail', 
+            kwargs={'pk': self.object.config.id})
 
 
 class NotificationDeleteView(DeleteView):
@@ -52,7 +53,8 @@ class NotificationDeleteView(DeleteView):
     extra_context = {'head_title': 'Delete Notification'}
 
     def get_success_url(self):
-        return reverse('argus_service_configuration_detail', kwargs={'pk': self.object.service_config.id})
+        return reverse('argus_service_configuration_detail', 
+            kwargs={'pk': self.object.config.id})
 
 
 def configure_notification(request, pk):
@@ -74,7 +76,8 @@ def configure_notification(request, pk):
             notification.save()
 
             messages.success(request, "Notification {s} configuration updated.".format(s=notification.name))
-            return HttpResponseRedirect(reverse('argus_service_configuration_detail', kwargs={'pk': notification.service_config.id}))
+            return HttpResponseRedirect(reverse('argus_service_configuration_detail', 
+                kwargs={'pk': notification.config.id}))
 
     return render(request, 'argus/notifications/notification_configure.html', {
         'form': form,

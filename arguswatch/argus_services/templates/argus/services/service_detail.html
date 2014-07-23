@@ -47,8 +47,8 @@
                     <tr>
                         <th>Service Template</th>
                         <td>
-                            {% if service.service_config.is_template %}
-                            <a href="{% url "argus_service_configuration_detail" pk=service.service_config.id %}">{{ service.service_config.name }}</a>
+                            {% if service.config.is_template %}
+                            <a href="{% url "argus_service_configuration_detail" pk=service.config.id %}">{{ service.config.name }}</a>
                             {% else %}
                             <strong>Custom Config</strong>
                             {% endif %}

@@ -127,7 +127,7 @@ class Service(models.Model):
     # Relation to plugin configuration.
     plugin_config = models.ForeignKey(ServicePluginConfiguration, null=True, related_name='service')
 
-    service_config = models.ForeignKey(ServiceConfiguration, 
+    config = models.ForeignKey(ServiceConfiguration, 
         related_name='services', verbose_name='Service Template')
 
     enabled = models.BooleanField(default=True, 
@@ -156,7 +156,7 @@ class Service(models.Model):
         default=STATE_UNKNOWN)
     # Wether state is provisional.
     # State will stay provisional, until a number of rechecks have been 
-    # executed. The amount is determined by service_config.
+    # executed. The amount is determined by config.
     state_provisional = models.BooleanField(default=False)
     # Message specifying state. Most important for warning.
     state_message = models.TextField(blank=True)
@@ -310,7 +310,7 @@ class Service(models.Model):
         Available: check_interval, retry_interval_soft, retry_interval_hard.
         """
 
-        config = self.service_config
+        config = self.config
         state = self.state
         interval = None
 
@@ -370,7 +370,7 @@ class Service(models.Model):
         old_state = self.state
         was_provisional = self.state_provisional
 
-        max_retries = self.service_config.max_retries
+        max_retries = self.config.max_retries
         retries = self.num_retries + 1
 
         event = None
@@ -511,7 +511,7 @@ class Service(models.Model):
         Determine which notifications should be sent for an event.
         """
 
-        return [n for n in self.service_config.notifications.all() if n.should_notify(self, event)]
+        return [n for n in self.config.notifications.all() if n.should_notify(self, event)]
 
     def process_event(self, event):
         """

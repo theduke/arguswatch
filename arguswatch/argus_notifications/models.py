@@ -29,7 +29,7 @@ from .plugins.email import EmailPluginConfig
 
 
 class Notification(models.Model):
-    service_config = models.ForeignKey(ServiceConfiguration, related_name='notifications')
+    config = models.ForeignKey(ServiceConfiguration, related_name='notifications')
 
     # Fully qualified package name of the notification plugin.
     plugin = models.CharField(max_length=200)
