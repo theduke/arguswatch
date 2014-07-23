@@ -195,9 +195,9 @@ def argus_api_service_event(request, pk=None, slug=None):
     if not (check_state and message):
         raise Exception("state or message not supplied.")
 
-    event = service.determine_event(check_state)
+    event = service.determine_event(check_state, message)
     if event:
-        service.process_event(event, message)
+        service.process_event(event)
 
     return HttpResponse('OK')
 

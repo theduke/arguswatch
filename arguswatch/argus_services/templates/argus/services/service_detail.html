@@ -9,7 +9,7 @@
 <div class="main-status">
     {% if service.enabled %}
     <p class="alert alert-{% get_state_class service %}" style="display: inline-block;">
-        Service is <strong>{{ service.get_state_description }}</strong>
+        Service is <strong>{{ service.get_state_display }}</strong>
     </p>
     {% else %}
     <p class="alert alert-warning" style="display: inline-block;">Service is currently <strong>DISABLED</strong>.</p>
@@ -123,7 +123,7 @@
                 <table class="table">
                     <tr class="alert-{% get_state_class service %}">
                         <th>Status</th>
-                        <td>{{ service.get_state_description }}</td>
+                        <td>{{ service.get_state_display }}</td>
                     </tr>
                     <tr>
                         <th>Last OK</th>
@@ -158,10 +158,6 @@
                     <tr>
                         <th>State</th>
                         <td>{{ service.get_state_display }}</td>
-                    </tr>
-                    <tr>
-                        <th>State type</th>
-                        <td>{{ service.get_state_type_display }}</td>
                     </tr>
                     <tr>
                         <th>Retries</th>

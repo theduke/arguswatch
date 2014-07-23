@@ -14,8 +14,8 @@
   </tr>
 
   {% for item in services %}
-  {% with item.get_state_description as state %}
-  <tr class="{% get_state_class state %}">
+  {% with item.state as state %}
+  <tr class="{% get_state_class item %}">
     <td class="name">
       <a href="{% url "argus_service_detail" pk=item.id %}">{{ item }}</a>
     </td>

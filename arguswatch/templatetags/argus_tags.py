@@ -12,20 +12,17 @@ register = template.Library()
 
 
 @register.simple_tag
-def get_state_class(state):
+def get_state_class(service):
     """
-    Get a css class for a state returned by 
-    Service.get_state_description()
+    Get a css class for a Service.STATE_*.
     """
 
-    if type(state) == Service:
-        state = state.get_state_description()
+    state = service.state
 
-    if state == "up":
+    if state == Service.STATE_OK:
         return "success"
-    elif state == "warning":
+    elif state == Service.STATE_WARNING or service.state_provisional:
         return "warning"
-    elif state == "down":
+    elif state == Service.STATE_DOWN or state == Service.STATE_UNKNOWN:
         return "danger"
-    elif state == "unknown":
-        return "warning"
+

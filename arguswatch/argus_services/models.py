@@ -202,7 +202,6 @@ class Service(models.Model):
         return {
             'name': self.name,
             'description': self.description,
-            'state_type': self.state_type,
             'state': self.state,
             'last_ok': self.last_ok,
             'last_state_change': self.last_state_change,

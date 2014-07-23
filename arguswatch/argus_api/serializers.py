@@ -11,6 +11,6 @@ class ServiceSerializer(serializers.ModelSerializer):
             'name', 'description', 'notes', 'tags',
             'parent', 'groups',
             'enabled',
-            'state_type', 'state',
+            'state',
             'last_checked', 'last_ok', 'last_state_change',
         )
