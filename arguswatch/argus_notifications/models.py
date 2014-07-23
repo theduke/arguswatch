@@ -43,13 +43,19 @@ class Notification(models.Model):
     # The last time each time was sent is persisted in the 
     # NotificationHistory object as last_*.
 
-    interval_state_change_provisional = models.SmallIntegerField(default=-1)
-    interval_state_stays_provisional = models.SmallIntegerField(default=-1)
-    interval_state_change = models.SmallIntegerField(default=60)
-    interval_state_stays = models.SmallIntegerField(default=60*60*12)
-    interval_stays_ok = models.SmallIntegerField(default=-1)
-    interval_change_ok = models.SmallIntegerField(default=0)
-    
+    interval_state_change_provisional = models.SmallIntegerField(default=-1,
+        help_text='Interval in seconds for service entering a provisional state (either UNKNOWN or DOWN).')
+    interval_state_stays_provisional = models.SmallIntegerField(default=-1,
+        help_text='Interval in seconds for service remaining in a provisional state (either UNKNOWN or DOWN).')
+    interval_state_change = models.SmallIntegerField(default=60,
+        help_text='Interval in seconds for service entering a non-provisional state (UNKNOWN, DOWN, WARNING).')
+    interval_state_stays = models.SmallIntegerField(default=60*60*12,
+        help_text='Interval in seconds for service remaining in non-provisional state (UNKNOWN, DOWN, WARNING).')
+    interval_stays_ok = models.SmallIntegerField(default=-1,
+        help_text='Interval in seconds for service remaining OK.')
+    interval_change_ok = models.SmallIntegerField(default=0,
+        help_text='Interval in seconds for service entering OR leaving state OK.')
+
     interval_hard = models.PositiveSmallIntegerField(default=5)
 
     class Meta:
