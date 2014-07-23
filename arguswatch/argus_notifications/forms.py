@@ -11,7 +11,6 @@ class NotificationForm(CrispyModelForm):
     class Meta:
         model = Notification
         fields = ['name', 'description', 'plugin',
-            'on_remains_up', 
             'interval_state_change_provisional',
             'interval_state_stays_provisional',
             'interval_state_change', 

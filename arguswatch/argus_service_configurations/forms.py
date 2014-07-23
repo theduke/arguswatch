@@ -16,9 +16,9 @@ class ServiceConfigurationForm(CrispyModelForm):
             'check_interval_provisional',
             'check_interval_warning',
             'check_interval_down',
-            'check_interval_unknown' 
+            'check_interval_unknown',
 
-            'max_retries_soft',
+            'max_retries',
 
             'api_can_trigger_events',
         ]
