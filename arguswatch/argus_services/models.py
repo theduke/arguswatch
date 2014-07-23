@@ -193,7 +193,7 @@ class Service(models.Model):
 
     def save(self, *args, **kwargs):
         self.slug = slugify(self.name)
-        super(ServiceSTATE_UNKNOWN_PROVISIONAL, self).save(*args, **kwargs)
+        super(Service, self).save(*args, **kwargs)
 
     def to_dict(self):
         """
@@ -222,7 +222,52 @@ class Service(models.Model):
 
         return self.get_plugin().name
 
+    def get_check_logger(self):
+        """
+        Get Logger for service checks.
+
+        A streamIO handler will be added, that allows to
+        retrieve the log as a string later.
+        Used when issue_check is run_locally in webserver.
+        """
+
+        logger = logging.getLogger('django.argus.celery')
+        logger.setLevel(logging.DEBUG)
+
+        # Handler.
+        stream = StringIO()
+        handler = logging.StreamHandler(stream)
+        handler.setLevel(logging.DEBUG)
+        # Formatter.
+        formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+        handler.setFormatter(formatter)
+
+        logger.addHandler(handler)
+
+        return logger
+
+    def get_check_logger_logs(self, logger):
+        #import ipdb; ipdb.set_trace()
+
+        handler = None
+
+        for h in logger.handlers:
+            if type(h) == logging.StreamHandler:
+                handler = h
+
+        if not handler:
+            raise Exception('Could not find StringIO handler!')
+
+        # Flush logging handler to ensure all logs are written to streamIO stream.
+        handler.flush()
+        logs = handler.stream.getvalue()
+        handler.stream.close()
+
+        return logs
+
     def issue_check(self, run_locally=False):
+        logger = self.get_check_logger()
+
         if self.celery_task_id:
             raise Exception("Another check is already in progress.")
 
@@ -232,35 +277,20 @@ class Service(models.Model):
         result_data = None
 
         if run_locally:
-            # Build up a string logger to be able to return the log results.
-            logger = logging.getLogger('django.argus.celery')
-            logger.setLevel(logging.DEBUG)
-            # Handler.
-            stream = StringIO()
-            handler = logging.StreamHandler(stream)
-            handler.setLevel(logging.DEBUG)
-            # Formatter.
-            formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-            handler.setFormatter(formatter)
+            logger.info("Executing check for service {} on webserver!".format(self))
             
-            for handler in logger.handlers:
-                logger.removeHandler(handler)
-            logger.addHandler(handler)
-
             result = checker.apply((self.plugin, 
                 self.plugin_config.get_settings()), {'logger': logger})
             result_data = self.handle_check_result(result, log=logger)
-
-            # Flush logging handler to ensure all logs are written to streamIO stream.
-            handler.flush()
-            result_data['logs'] = stream.getvalue()
-            stream.close()
         else:
             result = checker.delay(self.plugin, self.plugin_config.get_settings()) 
             self.celery_task_id = result.id
+            logger.debug("Issued check for service {} (task id: {})".format(self, result.id))
 
         self.last_issued = timezone.now()
         self.save()
+
+        result_data['logs'] = self.get_check_logger_logs(logger)
 
         return result_data if run_locally else result
 
@@ -281,11 +311,15 @@ class Service(models.Model):
         if not log:
             log = logging.getLogger('django.argus')
 
+        log.debug("Handling service {s} check result (task id: {t}".format(
+            s=self, t=result.id))
+
         # Retrieve data from task result.
         state, message = result.get()
 
         # Build an Event instance.
         event = self.determine_event(state, message)
+        #import ipdb; ipdb.set_trace()
         log.debug("Determined event for service {}: {}".format(self, event.event))
 
         # Update last_checked and celery task id.
@@ -294,7 +328,7 @@ class Service(models.Model):
         self.celery_task_id = ''
 
         # Process event.
-        self.process_event(event)
+        self.process_event(event, log=log)
 
         return {
             'state': state,
@@ -473,7 +507,7 @@ class Service(models.Model):
 
         return instance
 
-    def trigger_event(self, event):
+    def trigger_event(self, event, log):
         """
         Adapt the state of this event based on an Event instance.
 
@@ -495,7 +529,11 @@ class Service(models.Model):
         # If state was provisional, but is not provisional anymore,
         # retry counter must be reset to 0.
         if event.old_state_provisional and not event.new_state_provisional:
+            log.debug("Resetting retry counter")
             self.num_retries = 0
+        elif event.old_state_provisional and event.new_state_provisional:
+            log.debug("Incrementig retry counter.")
+            self.num_retries += 1
 
         # If state has changed, update last_state_change.
         if event.old_state != event.new_state:
@@ -513,7 +551,7 @@ class Service(models.Model):
 
         return [n for n in self.config.notifications.all() if n.should_notify(self, event)]
 
-    def process_event(self, event):
+    def process_event(self, event, log):
         """
         Do the complete workflow that takes place, 
         when an event occurs.
@@ -523,7 +561,9 @@ class Service(models.Model):
         event is an Event instance.
         """
 
-        self.trigger_event(event)
+        log.debug("Processing event")
+
+        self.trigger_event(event, log=log)
         self.save()
 
         notifications = self.determine_notifications_to_send(event)
@@ -541,7 +581,7 @@ class Event(models.Model):
     EVENT_GOES_UNKNOWN = 'goes_unknown'
     EVENT_STAYS_UNKNOWN = 'stays_unknown'
     EVENT_GOES_DOWN_PROVISIONAL = 'goes_down_provisional'
-    EVENT_STAYS_DOWN_PROVISIONAL = 'goes_down'
+    EVENT_STAYS_DOWN_PROVISIONAL = 'stays_down_provisional'
     EVENT_GOES_DOWN = 'goes_down'
     EVENT_STAYS_DOWN = 'stays_down'
     EVENT_GOES_WARNING = 'goes_warning'
