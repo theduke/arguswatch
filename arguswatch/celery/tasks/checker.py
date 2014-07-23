@@ -3,7 +3,7 @@ from celery.registry import tasks
 from celery.utils.log import get_task_logger
 
 from arguswatch.argus_services.models import Service
-from arguswatch.argus_services.plugins import ServiceIsDownException, PluginCheckError
+from arguswatch.argus_services.plugins import PluginImplementationError, PluginConfigurationError, ServiceCheckFailed ServiceIsDown, ServiceHasWarning
 from arguswatch.utils.django import get_cls_by_name
 
 
@@ -30,15 +30,24 @@ class ArgusChecker(Task):
         plugin = get_cls_by_name(plugin_cls_name)()
         plugin.set_logger(logger or get_task_logger('django'))
 
+        msg = None
         try:
-            plugin.run_check(settings)
-        except PluginCheckError as e:
-            return (Service.CHECK_STATE_KNOWN_ERROR, e.reason)
-        except ServiceIsDownException as e:
-            return (Service.CHECK_STATE_DOWN, e.info)
+            msg = plugin.run_check(settings)
+        except PluginImplementationError as e:
+            return (Service.STATE_UNKNOWN, e.message)
+        except PluginConfigurationError as e:
+            return (Service.STATE_UNKNOWN, "Plugin {} is misconfigured: {}".format(
+                plugin_cls_name, e.message)
+        except ServiceCheckFailed as e:
+            return (Service.STATE_UNKNOWN, "Service check failed: " + e.reason)
+        except ServiceIsDown as e:
+            return (Service.STATE_DOWN, e.message)
+        except ServiceHasWarning as e:
+            return (Service.STATE_WARNING, e.message)
         except Exception as e:
-            return (Service.CHECK_STATE_UNKNOWN_ERROR, '{}: {}'.format(e.__class__, e))   
+            return (Service.STATE_UNKNOWN, 'Unknown exception: {}: {}'.format(
+                e.__class__, e))   
 
-        return (Service.CHECK_STATE_UP, '')
+        return (Service.STATE_UP, msg or '')
 
 tasks.register(ArgusChecker)

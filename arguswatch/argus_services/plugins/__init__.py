@@ -24,6 +24,21 @@ class PluginConfigurationError(ServiceException):
 
     pass
 
+class ServiceCheckFailed(ServiceException):
+    """
+    Thrown when a plugin check fails in some EXPECTED way.
+    For example, if a website should be checked, but the checking host
+    does not have an active internet connection.
+
+    If the run_check method throws any other exception apart from 
+    PluginCheckError, ServiceIsDown, ServiceHasWarning special reporting and 
+    error handling will commence.
+
+    So plugins should do their best to handle known errors, and throw
+    this exception with a good explenation.
+    """
+
+    pass
 
 class ServiceIsDown(ServiceException):
     """
@@ -41,21 +56,6 @@ class ServiceHasWarning(ServiceException):
     pass
 
 
-class ServiceCheckFailed(ServiceException):
-    """
-    Thrown when a plugin check fails in some EXPECTED way.
-    For example, if a website should be checked, but the checking host
-    does not have an active internet connection.
-
-    If the run_check method throws any other exception apart from 
-    PluginCheckError, ServiceIsDown, ServiceHasWarning special reporting and 
-    error handling will commence.
-
-    So plugins should do their best to handle known errors, and throw
-    this exception with a good explenation.
-    """
-
-    pass
 
 
 class PluginManager(type):
