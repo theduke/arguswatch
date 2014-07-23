@@ -6,7 +6,7 @@ class ServiceException(Exception):
 
     def __init__(self, message, *args, **kwargs):
         self.message = message
-        super(ServiceException, self).__init__(info, *args, **kwargs)
+        super(ServiceException, self).__init__(message, *args, **kwargs)
 
 
 class PluginImplementationError(ServiceException):
