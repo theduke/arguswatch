@@ -39,20 +39,16 @@ class Notification(models.Model):
     name = models.CharField(max_length=100, help_text='Verbose name for this notification.')
     description = models.TextField(blank=True)
 
-    # For each event type from Event.EVENT_*,
-    # there is a soft and a hard limit.
-    # The soft limit specifies, how long (in seconds) after a notification for 
-    # the SAME event type has been sent, it can be sent again.
-    # The hard limit specifies the same, but in reference to the last time ANY 
-    # notification has been sent.
-    # -1 is for never send.
-    # 0 is for always send.
+    # Intervals for different types of events.
+    # The last time each time was sent is persisted in the 
+    # NotificationHistory object as last_*.
 
     interval_state_change_provisional = models.SmallIntegerField(default=-1)
     interval_state_stays_provisional = models.SmallIntegerField(default=-1)
     interval_state_change = models.SmallIntegerField(default=60)
     interval_state_stays = models.SmallIntegerField(default=60*60*6)
     interval_change_ok = models.SmallIntegerField(default=0)
+    
     interval_hard = models.PositiveSmallIntegerField(default=5)
 
     class Meta:
