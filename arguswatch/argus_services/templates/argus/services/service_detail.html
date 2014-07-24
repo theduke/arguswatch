@@ -67,7 +67,7 @@
                         <th>Child services</th>
                         <td>
                             {% for child in service.children.all %}
-                            <a href="{% url "argus_service_detail" pk=service.parent.id %}">{{ child }}</a>
+                            <a href="{% url "argus_service_detail" pk=child.id %}">{{ child }}</a>
                             {% if not forloop.last %},&nbsp;{% endif %}
                             {% endfor %}
                         </td>
