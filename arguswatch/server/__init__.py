@@ -41,7 +41,11 @@ class Server:
 
     def check_services(self):
         for service in Service.objects.filter(enabled=True).select_related('config'):
-            self.handle_service(service)
+            try:
+                self.handle_service(service)
+            except Exception as e:
+                self.logger.warning("Handling of service {s} failed: {e}".format(
+                    s=service, e=e))
 
     def handle_service(self, service):
         """
